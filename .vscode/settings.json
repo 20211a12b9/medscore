@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/2c558d90-153a-484e-9e12-04f5d40ff590/resourceGroups/appsvc_linux_centralus_basic/providers/Microsoft.Web/sites/medscore-api",
+    "appService.deploySubpath": "."
+}
