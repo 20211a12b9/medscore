@@ -6,66 +6,75 @@ name: Build and deploy Node.js app to Azure Web App - medscore-api
 on:
   push:
     branches:
-      - master
-  workflow_dispatch:
+      - master  # Trigger the workflow on push to master branch
+  workflow_dispatch:  # Manually trigger the workflow from GitHub UI
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Run the build job on the latest Ubuntu environment
 
     steps:
+      # Step 1: Checkout the repository code
       - uses: actions/checkout@v4
 
+      # Step 2: Set up Node.js environment
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '20.x'  # Set the Node.js version to 20.x
 
-      - name: npm install, build, and test
+      # Step 3: Install dependencies, build the app, and run tests
+      - name: Install dependencies, build, and test
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm install          # Install the app dependencies
+          npm run build --if-present  # Build the app if there's a build script
+          npm run test --if-present    # Run tests if defined
 
+      # Step 4: Zip the app for deployment
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -r release.zip ./  # Create a zip file containing the app files for deployment
 
+      # Step 5: Upload artifact to be used by the deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: node-app  # Name the artifact as "node-app"
+          path: release.zip  # Path to the zip file
 
   deploy:
-    runs-on: ubuntu-latest
-    needs: build
+    runs-on: ubuntu-latest  # Run the deployment job on the latest Ubuntu environment
+    needs: build  # Ensure the deployment runs after the build job completes
     environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: 'Production'  # Set the environment to "Production"
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}  # Set URL to the Azure Web App URL after deployment
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write  # Permissions to request the JWT for Azure login
 
     steps:
+      # Step 1: Download the artifact from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: node-app  # Use the artifact name from the build job
 
+      # Step 2: Unzip the artifact for deployment
       - name: Unzip artifact for deployment
-        run: unzip release.zip
-      
+        run: unzip release.zip  # Extract the contents of the release.zip file
+
+      # Step 3: Log in to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D6FD2AA93D1C4F73808FDF4EC7002CF6 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_60DECB5919834199AF08B4A976282E95 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AB6188D49F304606BA4A7B33E218071A }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}  # Azure Application (client) ID from GitHub Secrets
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}  # Azure Tenant ID from GitHub Secrets
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}  # Azure Subscription ID from GitHub Secrets
 
-      - name: 'Deploy to Azure Web App'
+      # Step 4: Deploy the app to Azure Web App
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'medscore-api'
-          slot-name: 'Production'
-          package: .
-          
+          app-name: 'medscore-api'  # Name of the Azure App Service (Web App)
+          slot-name: 'Production'  # Deployment slot (usually "Production")
+          package: '.'  # Path to the app package (current directory containing the app files)
+
