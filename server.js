@@ -1,6 +1,6 @@
 const express = require("express");
 const connectDb = require("./config/dbConnection");
-const errorHandler = require("./middleware/errorHandlor");
+const errorHandler = require("./middleware/errorHandler");
 const dotenv = require("dotenv").config();
 const cors = require('cors');
 const path = require('path');
@@ -16,7 +16,7 @@ const corsOptions = {
     origin: [
         'http://localhost:3000', 
         'https://medscore-api.azurewebsites.net',
-        'medscore-api-f8g2gef3cghvdxgm.canadacentral-01.azurewebsites.net',
+        'https://medscore-awbybyh8ckd8g0a7.centralindia-01.azurewebsites.net',
         'https://medscore-api.onrender.com'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -42,13 +42,14 @@ app.use("/api/user", require("./Router/registerRoutes"));
 app.use(errorHandler);
 
 // MongoDB connection with retry logic
+let server;
 const startServer = async () => {
     try {
         // Connect to MongoDB
         await connectDb();
         
         // Start server only after successful DB connection
-        app.listen(PORT, () => {
+        server = app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
     } catch (error) {
