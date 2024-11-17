@@ -6,7 +6,7 @@ const cors = require('cors');
 connectDb();
 const app=express();
 app.use(express.json());
-const port=8080 || 5001 ;
+const port = process.env.PORT || 8080; // This allows you to set a dynamic port through environment variables, with 8080 as the default ;
 const path = require('path');
 
 app.use(cors())
