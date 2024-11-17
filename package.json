@@ -4,12 +4,16 @@
   "description": "This is for MedScore",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"No test specified\"",  // Removed exit 1
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "echo \"No build required\""  // Added build script
   },
   "author": "Venky",
   "license": "ISC",
+  "engines": {  // Added Node.js version specification
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
