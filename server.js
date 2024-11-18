@@ -6,12 +6,12 @@ const cors = require('cors');
 connectDb();
 const app=express();
 app.use(express.json());
-const port=process.env.port || 5001;
+const port = process.env.PORT || 8080; // This allows you to set a dynamic port through environment variables, with 8080 as the default ;
 const path = require('path');
 
 app.use(cors())
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com'],
+    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com','https://medscore-awbybyh8ckd8g0a7.centralindia-01.azurewebsites.net],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, // If you're using cookies or authentication
