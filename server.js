@@ -13,7 +13,7 @@ const port = process.env.PORT || 5051; // Dynamic port with default 8080
 
 // CORS options
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com', 'https://medscore.in'],
+    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com', 'https://medscore.in','https://www.medscore.in'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, // If cookies or authentication are used
