@@ -1,41 +1,45 @@
-const express=require("express");
+const express = require("express");
 const connectDb = require("./config/dbConnection");
-const errorHandler=require("./middleware/errorHandlor")
-const dotenv =require("dotenv").config();
-const cors = require('cors');
+const errorHandler = require("./middleware/errorHandlor");
+const dotenv = require("dotenv").config();
+const cors = require("cors");
+const path = require("path");
+
 connectDb();
-const app=express();
+const app = express();
 app.use(express.json());
-<<<<<<< HEAD
-const port = process.env.PORT || 8080; // This allows you to set a dynamic port through environment variables, with 8080 as the default ;
-=======
-const port=process.env.PORT || 5001;
->>>>>>> 0f5dda73ef9b20ac21ecc73bc3e944e95c99e422
-const path = require('path');
 
-app.use(cors())
+const port = process.env.PORT || 8080; // Dynamic port with default 8080
+
+// CORS options
 const corsOptions = {
-<<<<<<< HEAD
-    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com','https://medscore-awbybyh8ckd8g0a7.centralindia-01.azurewebsites.net],
-=======
-    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com','medscore-api-f8g2gef3cghvdxgm.canadacentral-01.azurewebsites.net],
->>>>>>> 0f5dda73ef9b20ac21ecc73bc3e944e95c99e422
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // If you're using cookies or authentication
-    maxAge: 86400 // How long the results of a preflight request can be cached
-  };
-  
-  app.use(cors(corsOptions));
-app.use(express.static(path.join(__dirname, 'build')));
-app.use("/api/user",require("./Router/registerRoutes"))
+    origin: [
+        "http://localhost:3000",
+        "https://medscore-api.onrender.com",
+        "https://medscore-awbybyh8ckd8g0a7.centralindia-01.azurewebsites.net",
+        "https://medscore-api-f8g2gef3cghvdxgm.canadacentral-01.azurewebsites.net"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // For cookies or authentication
+    maxAge: 86400 // Preflight cache duration in seconds
+};
 
-app.use(errorHandler)
+app.use(cors(corsOptions));
+app.use(express.static(path.join(__dirname, "build")));
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// Routes
+app.use("/api/user", require("./Router/registerRoutes"));
+
+// Error handling middleware
+app.use(errorHandler);
+
+// Serve React app for any other routes
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-app.listen(port,()=>{
-    console.log(`this is running in port ${port}`);
-})
+// Start the server
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
