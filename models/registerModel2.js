@@ -1,5 +1,5 @@
 const mongoose=require("mongoose")
-
+//this distributor entity
 const registerSchema2 =mongoose.Schema(
     {
     pharmacy_name:{
@@ -8,7 +8,7 @@ const registerSchema2 =mongoose.Schema(
     },
     email:{
         type:String,
-        required:[true,"email is mandatory"]
+       
     },
     phone_number:{
         type:String,
@@ -34,6 +34,24 @@ const registerSchema2 =mongoose.Schema(
     expiry_date:{
         type:String,
        
+    },
+    distributor_types: {
+        pharma_ethical: {
+            type: Boolean,
+            default: false
+        },
+        generic_general: {
+            type: Boolean,
+            default: false
+        },
+        surgicals: {
+            type: Boolean,
+            default: false
+        },
+        pcd: {
+            type: Boolean,
+            default: false
+        }
     },
     resetPasswordToken: {
         type: String,

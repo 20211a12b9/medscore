@@ -11,7 +11,7 @@ const jwt=require("jsonwebtoken")
 
 const registerController= asyncHandler(async (req,res)=>{
     const { pharmacy_name, email, phone_number, dl_code, address, password,expiry_date } = req.body;
-    if(!pharmacy_name || !email || !phone_number || !dl_code || !address)
+    if(!pharmacy_name || !phone_number || !dl_code || !address)
     {
         res.status(400)
         return res.json({ message: "All fields are mandatory" });
@@ -65,9 +65,9 @@ const registerController= asyncHandler(async (req,res)=>{
 //access public
 
 const registerController2= asyncHandler(async (req,res)=>{
-    const { pharmacy_name, email, phone_number, dl_code, address, password, gstno,expiry_date } = req.body;
+    const { pharmacy_name, email, phone_number, dl_code, address, password, gstno,expiry_date,distributor_types } = req.body;
     console.log("body",req.body)
-    if(!pharmacy_name || !email || !phone_number || !dl_code || !address || !password || !gstno)
+    if(!pharmacy_name || !phone_number || !dl_code || !address || !password || !gstno)
     {
         res.status(400)
         return res.json({ message: "All fields are mandatory" });
@@ -89,7 +89,8 @@ const registerController2= asyncHandler(async (req,res)=>{
         address,
         password:bcryptedPassword,
         gstno,
-        expiry_date
+        expiry_date,
+        distributor_types
     })
     console.log("regiter2",register)
     register.generatePasswordReset();
@@ -107,6 +108,7 @@ const registerController2= asyncHandler(async (req,res)=>{
               address: register.address,
               gstno: register.gstno,
               expiry_date: register.expiry_date,
+              distributor_types:distributor_types
             },
           });
     }

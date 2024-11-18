@@ -11,7 +11,7 @@ const registerSchema = mongoose.Schema(
         },
         email: {
             type: String,
-            required: [true, "email is mandatory"]
+           
         },
         phone_number: {
             type: String,
