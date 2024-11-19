@@ -917,6 +917,53 @@ const getSumByDescription = asyncHandler(async (req, res) => {
     }
 });
   
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription}
+//@desc get report default info if duspute true or false
+//@router /api/user/checkifdisputed/:id
+//access public
+
+const checkifdisputedtrue = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { pharmadrugliseanceno, invoice } = req.query;
+
+    // Validate required fields
+    if (!id || !pharmadrugliseanceno || !invoice) {
+        res.status(400);
+        throw new Error('Provided information is not sufficient');
+    }
+
+    // Find the invoice document
+    const invoiceData = await InvoiceRD.findOne({
+        customerId: id,
+        pharmadrugliseanceno: pharmadrugliseanceno,
+        invoice: invoice
+    });
+
+    // Check if invoice exists
+    if (!invoiceData) {
+        res.status(404);
+        throw new Error('Invoice not found');
+    }
+
+    // Get dispute status
+    const isDisputed = invoiceData.dispute || false;
+
+    // Check if 24 hours have passed since creation
+    const createdTime = new Date(invoiceData.createdAt).getTime();
+    const currentTime = new Date().getTime();
+    const hoursPassed = (currentTime - createdTime) / (1000 * 60 * 60);
+    const hasTimeElapsed = hoursPassed >= 24;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            isDisputed,
+            hasTimeElapsed,
+            hoursPassed: Math.floor(hoursPassed),
+            invoice: invoiceData
+        }
+    });
+});
+
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue}
 
 

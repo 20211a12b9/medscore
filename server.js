@@ -9,21 +9,18 @@ connectDb();
 const app = express();
 app.use(express.json());
 
-const port = process.env.PORT || 8080; // Dynamic port with default 8080
+const port = process.env.PORT || 5001; // Dynamic port with default 8080
 
 // CORS options
 const corsOptions = {
-    origin: [
-        "http://localhost:3000",
-        "https://medscore-api.onrender.com",
-        "https://medscore-awbybyh8ckd8g0a7.centralindia-01.azurewebsites.net",
-        "https://medscore-api-f8g2gef3cghvdxgm.canadacentral-01.azurewebsites.net"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // For cookies or authentication
-    maxAge: 86400 // Preflight cache duration in seconds
+    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com', 'https://medscore.in','https://www.medscore.in'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // If cookies or authentication are used
 };
+
+app.use(cors(corsOptions));
+
 
 app.use(cors(corsOptions));
 app.use(express.static(path.join(__dirname, "build")));
