@@ -9,11 +9,7 @@ connectDb();
 const app = express();
 app.use(express.json());
 
-<<<<<<< HEAD
 const port = process.env.PORT || 5001; // Dynamic port with default 8080
-=======
-const port = process.env.PORT || 5051; // Dynamic port with default 8080
->>>>>>> 275dd6ba66e74dc14cb99f20705ac6d1cbbc79fe
 
 // CORS options
 const corsOptions = {
