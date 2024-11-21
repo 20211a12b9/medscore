@@ -1,4 +1,5 @@
 const mongoose=require('mongoose');
+const { image } = require('pdfkit');
 
 
 const blogsmodel=mongoose.Schema({
@@ -16,6 +17,9 @@ const blogsmodel=mongoose.Schema({
     },
     tags:{
         type: [String]
+    },
+    image:{
+        type:String
     }
 
 },{

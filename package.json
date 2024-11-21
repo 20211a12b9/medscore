@@ -4,14 +4,14 @@
   "description": "This is for MedScore",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"No test specified\"",  
+    "test": "echo \"No test specified\"",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo \"No build required\"" 
+    "build": "echo \"No build required\""
   },
   "author": "Venky",
   "license": "ISC",
-  "engines": {  
+  "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {

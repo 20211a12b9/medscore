@@ -1,61 +1,70 @@
-const asyncHandler=require("express-async-handler")
-const Blog=require('../models/blogsModel')
+const asyncHandler = require("express-async-handler");
+const Blog = require('../models/blogsModel');
 
 //@desc post blogs 
-//@router /api/user/blogs/
+//@route POST /api/user/blogs/
 //@access public
-
 const postBlogs = asyncHandler(async (req, res) => {
-    const { title, content, author, tags } = req.body;
+    const { title, content, author, tags, image } = req.body;
+  
+    console.log(image, title, content, author, tags);
 
-    if (!author || !title || !content) {
-        res.status(400);
-        throw new Error('Missing required data');
+    if (!title || !content || !image) {
+        return res.status(400).json({ message: 'Missing required data' });
     }
 
     try {
-        const blogs = await Blog.create({
+        const blog = await Blog.create({
             title,
             content,
-            author,
-            tags
+            author: author || 'Anonymous', // Default author if not provided
+            tags: Array.isArray(tags) ? tags : [], // Ensure tags is always an array
+            image
         });
 
         res.status(201).json({
-            _id: blogs._id,
-            title: blogs.title,
-            content: blogs.content,
-            tags: blogs.tags,
-            author: blogs.author
+            _id: blog._id,
+            title: blog.title,
+            content: blog.content,
+            tags: blog.tags,
+            author: blog.author,
+            image: blog.image
         });
     } catch (error) {
-        res.status(500);
-        throw new Error('Failed to create blog');
+        res.status(500).json({ 
+            message: 'Failed to create blog',
+            error: error.message 
+        });
     }
 });
-//@desc get blogs
-//router /api/user/getBlogs/
+//@desc get all blogs
+//@route GET /api/user/getBlogs/
 //@access public
-
-const getBlogs=asyncHandler(async(req,res)=>{
+const getBlogs = asyncHandler(async (req, res) => {
     try {
-        const blogs = await Blog.find();
+        const blogs = await Blog.find().sort({ createdAt: -1 });
         res.json(blogs);
-      } catch (err) {
-        res.status(500).send(err.message);
-      }
-})
-//@desc get blogs
-//router /api/user/getBlogs/:id
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching blogs', error: err.message });
+    }
+});
+
+//@desc get blog by id
+//@route GET /api/user/getBlogs/:id
 //@access public
-
-const getBlogsbyid=asyncHandler(async(req,res)=>{
+const getBlogsById = asyncHandler(async (req, res) => {
     try {
-        const id=req.params.id;
-        const blogs = await Blog.find({_id: id});
-        res.json(blogs);
-      } catch (err) {
-        res.status(500).send(err.message);
-      }
-})
-module.exports={postBlogs,getBlogs,getBlogsbyid}
+        const blog = await Blog.findById(req.params.id);
+        
+        if (!blog) {
+            res.status(404);
+            throw new Error('Blog not found');
+        }
+        
+        res.json(blog);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching blog', error: err.message });
+    }
+});
+
+module.exports = { postBlogs, getBlogs, getBlogsById };
