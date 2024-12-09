@@ -138,46 +138,69 @@ console.log("licenseNo",licenseNo)
 //@desc get invoiceRD data
 //@router /api/user/getInvoiceRDforDistUpdate
 //access public
-const getInvoiceRDDataforDistUpdate=asyncHandler(async (req,res)=>{
-    const  licenseNo  = req.query.licenseNo;
-console.log("licenseNo",licenseNo)
+const getInvoiceRDDataforDistUpdate = asyncHandler(async (req, res) => {
+    const { licenseNo } = req.query;
+    console.log("licenseNo", licenseNo);
+
     // Validate license number
     if (!licenseNo) {
         res.status(400);
         throw new Error('Pharmacy drug license number is required');
     }
 
-    // Find all invoices matching the license number
-    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,updatebydistBoolean:false })
+    // Fetch matching dl_codes from Register collection
+    const pharma = await Register.find({
+        $or: [
+            { pharmacy_name: { $regex: licenseNo, $options: "i" } },
+            { dl_code: { $regex: licenseNo, $options: "i" } }
+        ]
+    }).select({
+        dl_code: 1, // Select only the dl_code field
+        _id: 0      // Exclude the _id field (optional)
+    });
+
+    let dlCodes = [];
+    if (pharma.length > 0) {
+        dlCodes = pharma.map(doc => doc.dl_code);
+        // console.log("List of dl_codes:", dlCodes);
+    } 
+
+    // Fetch all invoices matching any of the dl_codes
+    const invoiceData = await InvoiceRD.find({
+        pharmadrugliseanceno: { $in: dlCodes } // Match any dl_code
+    })
     .select({
-        pharmadrugliseanceno:1,
-         invoice: 1,
-         invoiceData:1,
-         dueDate:1,
-         delayDays:1,
-         invoiceAmount:1,
-         invoiceDate:1,
-         customerId:1,
-         reason:1,
-         dispute:1
-  
-    }).lean()       
+        pharmadrugliseanceno: 1,
+        invoice: 1,
+        invoiceData: 1,
+        dueDate: 1,
+        delayDays: 1,
+        invoiceAmount: 1,
+        invoiceDate: 1,
+        customerId: 1,
+        reason: 1,
+        dispute: 1
+    }).lean();
 
     if (!invoiceData || invoiceData.length === 0) {
         res.status(404);
-        throw new Error('No invoices found for this license number');
+        throw new Error('No invoices found for the provided license numbers');
     }
 
-    const serialData=invoiceData.map((invoice,index)=>({
-        serialNo:index+1,
+    // Add serial numbers to the invoice data
+    const serialData = invoiceData.map((invoice, index) => ({
+        serialNo: index + 1,
         ...invoice
-    }))
+    }));
+
+    // Return the final response
     res.status(200).json({
         success: true,
         count: serialData.length,
         data: serialData
     });
-})
+});
+
 //@desc get invoiceRD data
 //@router /api/user/getInvoiceRDforDist/:distId
 //access public
@@ -192,7 +215,7 @@ console.log("licenseNo",licenseNo)
     }
 // const pharma=await Register.findOne({dl_code:licenseNo})
 let pharma;
-pharma=await Register.findOne({pharmacy_name:licenseNo})
+pharma=await Register.findOne({ pharmacy_name: { $regex: licenseNo, $options: "i" } })
 if(!pharma)
 {
     pharma=await Register.findOne({dl_code:licenseNo})
@@ -305,44 +328,34 @@ const linkpharmaController =asyncHandler(async(req,res)=>{
 //@desc get invoice data
 //@router /api/user/getPharmaData/
 //access public
-const getPharmaData=asyncHandler(async (req,res)=>{
-    const  licenseNo  = req.query.licenseNo;
-console.log("licenseNo",licenseNo)
+const getPharmaData = asyncHandler(async (req, res) => {
+    const licenseNo = req.query.licenseNo;
+    console.log("licenseNo", licenseNo)
+
     // Validate license number
     if (!licenseNo) {
         res.status(400);
         throw new Error('Pharmacy drug license number is required');
     }
-    let pharma;
-    pharma=await Register.findOne({pharmacy_name:licenseNo})
-    if(!pharma)
-    {
-        pharma=await Register.findOne({dl_code:licenseNo})
-        if (!pharma) {
-       
-           
-                res.status(400);
-            throw new Error('This licenseNo data is not found in DB');
-            
-            
-        }
-        
-        
-    }
-    const ls=pharma.dl_code;
-    // Find all invoices matching the license number
-    const pharmadata = await Register.find({ dl_code: ls })
-    .select({
-        pharmacy_name:1,
+
+    let pharmadata;
+    
+    // Use $regex with case-insensitive partial matching for both pharmacy_name and dl_code
+    pharmadata = await Register.find({ 
+        $or: [
+            { pharmacy_name: { $regex: licenseNo, $options: "i" } },
+            { dl_code: { $regex: licenseNo, $options: "i" } }
+        ]
+    }).select({
+        pharmacy_name: 1,
         email: 1,
-        phone_number:1,
-        dl_code:1,
-         delayDays:1,
-         address:1,
-         expiry_date:1,
-         createdAt:1
-  
-    })       
+        phone_number: 1,
+        dl_code: 1,
+        delayDays: 1,
+        address: 1,
+        expiry_date: 1,
+        createdAt: 1
+    });
 
     if (!pharmadata || pharmadata.length === 0) {
         res.status(404);
@@ -354,8 +367,7 @@ console.log("licenseNo",licenseNo)
         count: pharmadata.length,
         data: pharmadata
     });
-})
-
+});
 //@desc get invoice data
 //@router /api/user/checkIfLinked/:pharmaId/:distId
 //access public
@@ -963,7 +975,14 @@ const checkifdisputedtrue = asyncHandler(async (req, res) => {
         }
     });
 });
-
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue}
+//@desc get data
+//@router /api/user/getData
+const sampletogetData=asyncHandler(async(req,res)=>{
+    const { licenseNo } = req.query;
+    console.log("lojn",licenseNo)
+    const pharma = await Register.find({dl_code:{$regex:licenseNo,$options:"i"}})
+    res.json(pharma)
+})
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData}
 
 

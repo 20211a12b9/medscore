@@ -1,9 +1,10 @@
 const express=require("express");
-const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController } = require("../controllers/RegisterController");
-const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, getPharmaData2, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue } = require("../controllers/InvoiceController");
+const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData } = require("../controllers/RegisterController");
+const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, getPharmaData2, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData } = require("../controllers/InvoiceController");
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
+const { uploadcentalData } = require("../controllers/distCentalController");
 
 const router=express.Router();
 
@@ -41,4 +42,7 @@ router.get('/checkifdisputedtrue/:id',checkifdisputedtrue)
 router.get('/getBlogs', getBlogs);
 router.get('/getBlogs/:id', getBlogsById);
 router.post('/postBlogs', postBlogs);
+router.get('/sampletogetData',sampletogetData)
+router.post('/uploadcentalData',uploadcentalData)
+router.get('/getPharmaCentalData',getPharmaCentalData)
 module.exports=router;

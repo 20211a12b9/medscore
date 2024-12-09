@@ -5,6 +5,7 @@ const Link=require("../models/linkPharma")
 const Admin=require("../models/adminModel")
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken")
+const DistCentaldata=require("../models/distCentralModel")
 //@desc Register a user
 //@router /api/register/Pharmacyregister
 //access public
@@ -245,4 +246,43 @@ const getDistDataController = asyncHandler(async(req, res) => {
     
     res.json({ success: true, data: dist[0] }); 
 });
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController}
+//@desc get Pharma data
+//@router /api/user/getPharmaCentalData/
+//access public
+const getPharmaCentalData = asyncHandler(async (req, res) => {
+    const licenseNo = req.query.licenseNo;
+    console.log("licenseNo", licenseNo)
+
+    // Validate license number
+    if (!licenseNo) {
+        res.status(400);
+        throw new Error('Pharmacy drug license number is required');
+    }
+
+    let pharmadata;
+    
+    // Use $regex with case-insensitive partial matching for both pharmacy_name and dl_code
+    pharmadata = await DistCentaldata.find({ 
+        $or: [
+            { FirmName: { $regex: licenseNo, $options: "i" } },
+            { LicenceNumber: { $regex: licenseNo, $options: "i" } }
+        ]
+    }).select({
+        FirmName: 1,
+        LicenceNumber: 1,
+        Address: 1,
+        ExpDate: 1
+    });
+
+    if (!pharmadata || pharmadata.length === 0) {
+        res.status(404);
+        throw new Error(`No data found for this license number. You can add customer details from the home screen by clicking '/Addcustomer'.`);
+    }
+
+    res.status(200).json({
+        success: true,
+        count: pharmadata.length,
+        data: pharmadata
+    });
+});
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData}
