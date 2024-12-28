@@ -11,7 +11,7 @@ const XLSX = require('xlsx');
 const multer = require('multer');
 const path = require('path');
 const Outstanding=require("../models/outstanding");
-
+const { ObjectId } = require('mongodb');
 
 //@desc Invoce of customer
 //@router /api/user/Invoice/:id 
@@ -59,7 +59,7 @@ console.log("licenseNo",licenseNo)
     }
 
     // Find all invoices matching the license number
-    const invoiceData = await Invoice.find({ pharmadrugliseanceno: licenseNo })
+    const invoiceData = await Invoice.find({ pharmadrugliseanceno: licenseNo})
     .select({
         pharmadrugliseanceno:1,
          invoice: 1,
@@ -69,8 +69,8 @@ console.log("licenseNo",licenseNo)
          invoiceAmount:1,
          invoiceDate:1,
          reason:1,
-         createdAt:1
-  
+         createdAt:1,
+         seen:1
     }).lean()       
 
     if (!invoiceData || invoiceData.length === 0) {
@@ -100,7 +100,7 @@ console.log("licenseNo",licenseNo)
     }
 
     // Find all invoices matching the license number
-    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,reportDefault:true })
+    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,reportDefault:true, })
     .select({
         pharmadrugliseanceno:1,
          invoice: 1,
@@ -115,7 +115,9 @@ console.log("licenseNo",licenseNo)
          updatebydist:1,
          reasonforDispute:1,
          updatebydistBoolean:1,
-         createdAt:1
+         createdAt:1,
+         accept:1,
+         reject:1
 
   
     }).lean()       
@@ -279,7 +281,7 @@ console.log("alrdylinked",alrdylinked)
 const countNotices=asyncHandler(async(req,res)=>{
     const  licenseNo  = req.query.licenseNo;
     
-    const totalCount = await Invoice.countDocuments({ pharmadrugliseanceno: licenseNo });
+    const totalCount = await Invoice.countDocuments({ pharmadrugliseanceno: licenseNo ,seen:false});
 console.log(totalCount)
     res.status(200).json({
         success: true,
@@ -287,7 +289,19 @@ console.log(totalCount)
     });
 })
 
-
+//@desc get count no of notices
+//@router /api/user/countDisputes
+//@access public
+const countDisputes=asyncHandler(async(req,res)=>{
+    const  licenseNo  = req.query.licenseNo;
+    console.log("Licemse No",licenseNo)
+    const totalCount = await InvoiceRD.countDocuments({ customerId: new ObjectId(licenseNo) ,seen:false,dispute:true});
+console.log(totalCount)
+    res.status(200).json({
+        success: true,
+        totalCount
+    });
+})
 //@desc link pharmauser and distuser
 //@router /api/user/linkPharma/:id
 //@access public
@@ -542,7 +556,7 @@ const downloadExcelReport = asyncHandler(async (req, res) => {
 //@route PUT /api/user/updateReportDefault/:pharmadrugliseanceno/:invoice/:customerId
 //@access public
 const updateDefault = asyncHandler(async (req, res) => {
-    const { pharmadrugliseanceno, invoice,customerId } = req.params;
+    const { pharmadrugliseanceno, invoice,customerId } = req.body;
     
     const result = await InvoiceRD.updateOne(
         {
@@ -552,7 +566,9 @@ const updateDefault = asyncHandler(async (req, res) => {
         },
         {
             $set: { updatebydistBoolean: true,
-                updatebydist: new Date()
+                updatebydist: new Date(),
+                accept:true,
+                reject:false
              }
             
         }
@@ -576,12 +592,12 @@ const updateDefault = asyncHandler(async (req, res) => {
     }
 });
 //@desc update reportdefault to false
-//@route PUT /api/user/disputebypharma/:pharmadrugliseanceno/:invoice/:customerId
+//@route PUT /api/user/updateReportDefaultReject/:pharmadrugliseanceno/:invoice/:customerId
 //@access public
-const disputebyPharma = asyncHandler(async (req, res) => {
-    const { pharmadrugliseanceno, invoice,customerId } = req.params;
-    const {reasonforDispute}=req.body;
-    console.log("reasonforDispute",reasonforDispute)
+const updateDefaultReject = asyncHandler(async (req, res) => {
+    
+    const {  pharmadrugliseanceno, invoice, customerId } = req.body;
+    console.log("rejectred----")
     const result = await InvoiceRD.updateOne(
         {
             pharmadrugliseanceno: pharmadrugliseanceno,
@@ -589,8 +605,10 @@ const disputebyPharma = asyncHandler(async (req, res) => {
             customerId:customerId
         },
         {
-            $set: { dispute: true,
-                reasonforDispute:reasonforDispute
+            $set: { updatebydistBoolean: true,
+                updatebydist: new Date(),
+                reject:true,
+                accept:false
              }
             
         }
@@ -604,13 +622,85 @@ const disputebyPharma = asyncHandler(async (req, res) => {
     if (result.modifiedCount === 1) {
         res.status(200).json({
             success: true,
-            message: 'Dispute updated successfully'
+            message: 'Report default updated successfully'
         });
     } else {
         res.status(200).json({
             success: true,
             message: 'Document already up to date'
         });
+    }
+});
+//@desc update reportdefault 
+//@route PUT /api/user/disputebypharma/:pharmadrugliseanceno/:invoice/:customerId
+//@access public
+const disputebyPharma = asyncHandler(async (req, res) => {
+    // Input validation
+    
+    const { reasonforDispute, pharmadrugliseanceno, invoice, customerId } = req.body;
+
+    if (!pharmadrugliseanceno || !invoice || !customerId) {
+        res.status(400);
+        throw new Error('Missing required parameters');
+    }
+
+    if (!reasonforDispute) {
+        res.status(400);
+        throw new Error('Reason for dispute is required');
+    }
+
+    try {
+        
+        const result = await InvoiceRD.updateOne(
+            {
+                pharmadrugliseanceno: pharmadrugliseanceno,
+                invoice: invoice,
+                customerId: new ObjectId(customerId)
+            },
+            {
+                $set: {
+                    dispute: true,
+                    reasonforDispute,
+                    disputedAt: new Date()
+                }
+            }
+        );
+         console.log("---",result)
+        // Check if document exists
+        if (result.matchedCount === 0) {
+            res.status(404);
+            throw new Error('No invoice found with the provided details');
+        }
+
+        // Return appropriate response
+        if (result.modifiedCount === 1) {
+            return res.status(200).json({
+                success: true,
+                message: 'Dispute updated successfully',
+                data: {
+                    invoice,
+                    disputed: true,
+                    updatedAt: new Date()
+                }
+            });
+        }
+
+        // Document found but not modified (already disputed)
+        return res.status(200).json({
+            success: true,
+            message: 'Invoice already disputed',
+            data: {
+                invoice,
+                disputed: true
+            }
+        });
+    } catch (error) {
+        // Handle database errors
+        if (error.name === 'MongoError') {
+            res.status(500);
+            throw new Error('Database operation failed');
+        }
+        throw error;
     }
 });
 //@desc update reportdefault to false
@@ -983,6 +1073,203 @@ const sampletogetData=asyncHandler(async(req,res)=>{
     const pharma = await Register.find({dl_code:{$regex:licenseNo,$options:"i"}})
     res.json(pharma)
 })
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData}
+
+//@desc get all reportdefoult data who are disputed 
+//@router /api/user/getDispuedData
+//@access public
+const getDipsutedData=asyncHandler(async(req,res)=>{
+    const data=await InvoiceRD.find({dispute:true,updatebydistBoolean:false,reportDefault:true})
+    res.json({
+        success:true,
+        data:data
+    })
+})
+//@desc get all reportdefoult data who are disputed by customerId
+//@router /api/user/getDipsutedDatabyId
+//@access public
+const getDipsutedDatabyId=asyncHandler(async(req,res)=>{
+    const { id } = req.query;
+
+    if (!id) {
+        return res.status(400).json({
+            success: false,
+            message: "Customer ID is required",
+        });
+    }
+    try {
+        const data = await InvoiceRD.find({
+            dispute: true,
+            updatebydistBoolean: false,
+            reportDefault: true,
+            customerId: id,
+        });
+
+        res.json({
+            success: true,
+            data: data,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch disputed data",
+            error: error.message,
+        });
+    }
+})
+
+//@desc update notices seen status
+//@router /api/user/updateNoticesSeenStatus
+//@access public
+const updateNoticeSeenStatus = asyncHandler(async (req, res) => {
+    const { invoiceIds } = req.body;
+    console.log("seen");
+
+    // Validate request body
+    if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+        res.status(400);
+        throw new Error('Invalid request: invoiceIds array is required');
+    }
+
+    try {
+        // Convert each invoiceId to ObjectId
+        const objectIds = invoiceIds.map(id => new ObjectId(id));
+        console.log("objectIds",objectIds)
+        // Update all notices with the provided IDs
+        const updateResult = await Invoice.updateMany(
+            { 
+                _id: { $in: objectIds },
+                seen: { $ne: true } // ne means not equal
+            },
+            {
+                $set: { 
+                    seen: true,
+                    seenAt: new Date() 
+                }
+            }
+        );
+
+        // Check if any documents were modified
+        if (updateResult.modifiedCount === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No new notices to mark as seen',
+                modifiedCount: 0
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Notices marked as seen successfully',
+            modifiedCount: updateResult.modifiedCount
+        });
+
+    } catch (error) {
+        res.status(500);
+        throw new Error(`Failed to update notices: ${error.message}`);
+    }
+});
+//@desc update notices seen status
+//@router /api/user/updateDisputeSeenStatus
+//@access public
+const updateDisputeSeenStatus = asyncHandler(async (req, res) => {
+    const { invoiceIds } = req.body;
+    console.log("seen");
+
+    // Validate request body
+    if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+        res.status(400);
+        throw new Error('Invalid request: invoiceIds array is required');
+    }
+
+    try {
+        // Convert each invoiceId to ObjectId
+        const objectIds = invoiceIds.map(id => new ObjectId(id));
+        console.log("objectIds",objectIds)
+        // Update all notices with the provided IDs
+        const updateResult = await InvoiceRD.updateMany(
+            { 
+                _id: { $in: objectIds },
+                seen: { $ne: true } // ne means not equal
+            },
+            {
+                $set: { 
+                    seen: true,
+                    seenAt: new Date() 
+                }
+            }
+        );
+
+        // Check if any documents were modified
+        if (updateResult.modifiedCount === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No new notices to mark as seen',
+                modifiedCount: 0
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Notices marked as seen successfully',
+            modifiedCount: updateResult.modifiedCount
+        });
+
+    } catch (error) {
+        res.status(500);
+        throw new Error(`Failed to update notices: ${error.message}`);
+    }
+});
+//@desc update notices seen status
+//@router /api/user/updateDisputeAdminSeenStatus
+//@access public
+const updateDisputeAdminSeenStatus = asyncHandler(async (req, res) => {
+    const { invoiceIds } = req.body;
+    console.log("seen");
+
+    // Validate request body
+    if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+        res.status(400);
+        throw new Error('Invalid request: invoiceIds array is required');
+    }
+
+    try {
+        // Convert each invoiceId to ObjectId
+        const objectIds = invoiceIds.map(id => new ObjectId(id));
+        console.log("objectIds",objectIds)
+        // Update all notices with the provided IDs
+        const updateResult = await InvoiceRD.updateMany(
+            { 
+                _id: { $in: objectIds },
+                seenbyAdmin: { $ne: true } // ne means not equal
+            },
+            {
+                $set: { 
+                    seenbyAdmin: true,
+                    
+                }
+            }
+        );
+
+        // Check if any documents were modified
+        if (updateResult.modifiedCount === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No new notices to mark as seen',
+                modifiedCount: 0
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Notices marked as seen successfully',
+            modifiedCount: updateResult.modifiedCount
+        });
+
+    } catch (error) {
+        res.status(500);
+        throw new Error(`Failed to update notices: ${error.message}`);
+    }
+});
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus}
 
 

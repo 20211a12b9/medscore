@@ -34,6 +34,13 @@ const invoiceSchema=mongoose.Schema({
     reportDefault:{
         type:Boolean,
         default: false
+    },
+    seen:{
+        type:Boolean,
+        default: false
+    },
+    seenAt:{
+        type: Date
     }
 },
 {

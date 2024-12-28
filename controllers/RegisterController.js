@@ -1,6 +1,6 @@
 const asyncHandler=require("express-async-handler")
-const Register=require("../models/registerModel")
-const Register2=require("../models/registerModel2")
+const Register=require("../models/registerModel")//phraam
+const Register2=require("../models/registerModel2")//distributors
 const Link=require("../models/linkPharma")
 const Admin=require("../models/adminModel")
 const bcrypt=require("bcrypt");
@@ -147,7 +147,7 @@ const loginUser = asyncHandler(async (req,res)=>{
      },process.env.ACCESS_TOKEN_SECRET,
      {expiresIn:"15min"}
     );
-    res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name})
+    res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
    }
   
    else if(login2 && (await bcrypt.compare(password,login2.password)))
@@ -164,7 +164,7 @@ const loginUser = asyncHandler(async (req,res)=>{
       },process.env.ACCESS_TOKEN_SECRET,
       {expiresIn:"15min"}
      );
-     res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name})
+     res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
     }
     else if(login3 && (await bcrypt.compare(password,login3.password)))
         {
@@ -285,4 +285,32 @@ const getPharmaCentalData = asyncHandler(async (req, res) => {
         data: pharmadata
     });
 });
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData}
+//@desc get all dist data
+//@router /api/user/getDistributorsData
+//@access public
+const getDistributorsData=asyncHandler(async(req,res)=>{
+    const dist=await Register2.find({}).select({
+        pharmacy_name:1,
+        dl_code:1,
+        phone_number:1,
+        address:1,
+        expiry_date:1,
+        distributor_types:1
+
+    })
+    res.json({dist})
+})
+//@desc get all dist data
+//@router /api/user/getPharmacyData
+//@access public
+const getPharmacyData=asyncHandler(async(req,res)=>{
+    const dist=await Register.find({}).select({
+        pharmacy_name:1,
+        dl_code:1,
+        phone_number:1,
+        address:1,
+        expiry_date:1
+    })
+    res.json({dist})
+})
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData}

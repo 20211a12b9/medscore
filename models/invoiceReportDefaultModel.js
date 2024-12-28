@@ -53,7 +53,26 @@ const invoiceReportDefaultSchema=mongoose.Schema({
     },
     reasonforDispute:{
         type:String
-    }
+    },
+    accept:{
+        type:Boolean,
+        default:false
+    },
+    reject:{
+        type:Boolean,
+        default:false
+    },
+    seen:{
+        type:Boolean,
+        default: false
+    },
+    seenAt:{
+        type: Date
+    },
+    seenbyAdmin:{
+        type:Boolean,
+        default: false
+    },
 
 
 },

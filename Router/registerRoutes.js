@@ -1,10 +1,11 @@
 const express=require("express");
-const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData } = require("../controllers/RegisterController");
-const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, getPharmaData2, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData } = require("../controllers/InvoiceController");
+const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData } = require("../controllers/RegisterController");
+const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus } = require("../controllers/InvoiceController");
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
 const { uploadcentalData } = require("../controllers/distCentalController");
+const { getcountofAdminneedDetails } = require("../controllers/adminDashboard");
 
 const router=express.Router();
 
@@ -22,14 +23,15 @@ router.get("/getPharamaDatainPharma/:id",getPData)
 router.post("/login",loginUser)
 router.get('/downloadReport/excel', downloadExcelReport);
 router.get('/countNotices', countNotices);
-// router.post("/sendSMS/",sendSms)
+router.post("/sendSMS/",sendSms)
 router.get('/getdistdatabyphid/:id', getDistData);
 router.get("/checkIfLinked/:pharmaId/:distId",checkIfLinked)
 router.post("/createAdmin",adminController)
 router.get("/getInvoiceRDforDist/:distId",getInvoiceRDDataforDist)
 router.get('/getDistData/:id', getDistDataController);
-router.put('/updateReportDefault/:pharmadrugliseanceno/:invoice/:customerId',updateDefault)
-router.put('/disputebyPharma/:pharmadrugliseanceno/:invoice/:customerId',disputebyPharma)
+router.put('/updateReportDefault',updateDefault)
+router.put('/updateDefaultReject',updateDefaultReject)
+router.put('/disputebyPharma',disputebyPharma)
 router.put('/adminupdate/:pharmadrugliseanceno/:invoice/:customerId',adminupdate)
 router.post('/resetpassword',ResetPassword)
 router.post('/confirmResetPassword',confirmResetPassword)
@@ -45,4 +47,13 @@ router.post('/postBlogs', postBlogs);
 router.get('/sampletogetData',sampletogetData)
 router.post('/uploadcentalData',uploadcentalData)
 router.get('/getPharmaCentalData',getPharmaCentalData)
+router.get('/getcountofAdminneedDetails',getcountofAdminneedDetails)
+router.get('/getDipsutedData',getDipsutedData)
+router.get('/getDistributorsData',getDistributorsData)
+router.get('/getPharmacyData',getPharmacyData)
+router.get('/getDipsutedDatabyId',getDipsutedDatabyId)
+router.put('/updateNoticeSeenStatus',updateNoticeSeenStatus)
+router.get('/countDisputes',countDisputes)
+router.put('/updateDisputeSeenStatus',updateDisputeSeenStatus)
+router.put('/updateDisputeAdminSeenStatus',updateDisputeAdminSeenStatus)
 module.exports=router;

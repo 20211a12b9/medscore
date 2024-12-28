@@ -7,9 +7,9 @@ const Blog = require('../models/blogsModel');
 const postBlogs = asyncHandler(async (req, res) => {
     const { title, content, author, tags, image } = req.body;
   
-    console.log(image, title, content, author, tags);
+    console.log( author);
 
-    if (!title || !content || !image) {
+    if (!title || !content ) {
         return res.status(400).json({ message: 'Missing required data' });
     }
 
