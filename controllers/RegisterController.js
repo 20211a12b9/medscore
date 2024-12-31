@@ -6,6 +6,7 @@ const Admin=require("../models/adminModel")
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken")
 const DistCentaldata=require("../models/distCentralModel")
+const { query } = require("express")
 //@desc Register a user
 //@router /api/register/Pharmacyregister
 //access public
@@ -288,29 +289,100 @@ const getPharmaCentalData = asyncHandler(async (req, res) => {
 //@desc get all dist data
 //@router /api/user/getDistributorsData
 //@access public
-const getDistributorsData=asyncHandler(async(req,res)=>{
-    const dist=await Register2.find({}).select({
-        pharmacy_name:1,
-        dl_code:1,
-        phone_number:1,
-        address:1,
-        expiry_date:1,
-        distributor_types:1
-
-    })
-    res.json({dist})
-})
+const getDistributorsData = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const address = req.query.address || '';
+    const search = req.query.search || '';
+    const filters = JSON.parse(req.query.filters || '[]');
+    
+    const skip = (page - 1) * limit;
+  
+    const queryFilters = [];
+    
+    if (search) {
+      queryFilters.push({
+        $or: [
+          { pharmacy_name: { $regex: search, $options: "i" } },
+          { dl_code: { $regex: search, $options: "i" } }
+        ]
+      });
+    }
+  
+    if (address) {
+      queryFilters.push({ address: { $regex: address, $options: "i" } });
+    }
+  
+    if (filters.length > 0) {
+      queryFilters.push({
+        $or: filters.map(filter => ({
+          [`distributor_types.${filter}`]: true
+        }))
+      });
+    }
+  
+    const query = queryFilters.length > 0 ? { $or: queryFilters } : {};
+  
+    const dist = await Register2.find(query)
+      .select({
+        pharmacy_name: 1,
+        dl_code: 1,
+        phone_number: 1,
+        address: 1,
+        expiry_date: 1,
+        distributor_types: 1,
+      })
+      .skip(skip)
+      .limit(limit);
+  
+    const totalCount = await Register2.countDocuments(query);
+    
+    res.json({
+      dist,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        perPage: limit,
+      },
+    });
+  });
+  
 //@desc get all dist data
 //@router /api/user/getPharmacyData
 //@access public
 const getPharmacyData=asyncHandler(async(req,res)=>{
-    const dist=await Register.find({}).select({
+    const page=parseInt(req.query.page)||1
+    const limit=parseInt(req.query.limit)||100
+    const licenseNo=req.query.licenseNo||'';
+    const address=req.query.address||'';
+    const filter=[];
+    if(licenseNo)
+    {
+        filter.push({dl_code:{$regex:licenseNo ,$options:'i'}})
+        filter.push({pharmacy_name:{$regex:licenseNo,$options:'i'}})
+    }
+    if(address)
+    {
+        filter.push({address:{$regex:address,$options:'i'}})
+    }
+    const query=filter.length>0?{$or:filter}:{};
+    const skip=(page-1)*limit
+    const dist=await Register.find(query).select({
         pharmacy_name:1,
         dl_code:1,
         phone_number:1,
         address:1,
         expiry_date:1
+    }).skip(skip).limit(limit)
+    const totalCount=await Register.countDocuments(query);
+    res.json({dist,
+        pagination:{
+           totalCount:totalCount,
+           totalPages:Math.ceil(totalCount/limit),
+           currentPage:page,
+           perpage:limit
+        }
     })
-    res.json({dist})
 })
 module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData}

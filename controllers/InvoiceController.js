@@ -255,7 +255,8 @@ console.log("alrdylinked",alrdylinked)
          delayDays:1,
          invoiceAmount:1,
          invoiceDate:1,
-         reason:1
+         reason:1,
+         createdAt:1
           
   
     }).lean()       
@@ -1077,19 +1078,91 @@ const sampletogetData=asyncHandler(async(req,res)=>{
 //@desc get all reportdefoult data who are disputed 
 //@router /api/user/getDispuedData
 //@access public
-const getDipsutedData=asyncHandler(async(req,res)=>{
-    const data=await InvoiceRD.find({dispute:true,updatebydistBoolean:false,reportDefault:true})
-    res.json({
-        success:true,
-        data:data
-    })
-})
+const getDipsutedData = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page, 10) || 1; // Parse page number, default to 1
+    const limit = parseInt(req.query.limit, 10) || 100; // Parse limit, default to 100
+    const skip = (page - 1) * limit;
+
+    const licenseNo = req.query.licenseNo || '';
+    const address = req.query.address || '';
+
+    const filter = [];
+    
+    // Add filters based on licenseNo and address
+    if (licenseNo) {
+        filter.push({ dl_code: { $regex: licenseNo, $options: 'i' } });
+        filter.push({ pharmacy_name: { $regex: licenseNo, $options: 'i' } });
+    }
+    if (address) {
+        filter.push({ address: { $regex: address, $options: 'i' } });
+    }
+
+    // Build the query
+    const query = {
+        dispute: true,
+        updatebydistBoolean: false,
+        reportDefault: true,
+        ...(filter.length > 0 && { $or: filter }) // Add $or condition only if filters exist
+    };
+
+    try {
+        // Fetch data with pagination
+        const data = await InvoiceRD.find(query).skip(skip).limit(limit);
+
+        // Fetch total count for pagination
+        const totalCount = await InvoiceRD.countDocuments(query);
+
+        // Respond with data and pagination
+        res.json({
+            success: true,
+            data,
+            pagination: {
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page,
+                perPage: limit,
+            },
+        });
+    } catch (error) {
+        // Handle errors gracefully
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
 //@desc get all reportdefoult data who are disputed by customerId
 //@router /api/user/getDipsutedDatabyId
 //@access public
 const getDipsutedDatabyId=asyncHandler(async(req,res)=>{
     const { id } = req.query;
+    const page = parseInt(req.query.page, 10) || 1; // Parse page number, default to 1
+    const limit = parseInt(req.query.limit, 10) || 100; // Parse limit, default to 100
+    const skip = (page - 1) * limit;
 
+    const licenseNo = req.query.licenseNo || '';
+    const address = req.query.address || '';
+
+    const filter = [];
+    
+    // Add filters based on licenseNo and address
+    if (licenseNo) {
+        filter.push({ dl_code: { $regex: licenseNo, $options: 'i' } });
+        filter.push({ pharmacy_name: { $regex: licenseNo, $options: 'i' } });
+    }
+    if (address) {
+        filter.push({ address: { $regex: address, $options: 'i' } });
+    }
+
+    // Build the query
+    const query = {
+        dispute: true,
+            updatebydistBoolean: false,
+            reportDefault: true,
+            customerId: id,
+        ...(filter.length > 0 && { $or: filter }) // Add $or condition only if filters exist
+    };
     if (!id) {
         return res.status(400).json({
             success: false,
@@ -1097,16 +1170,17 @@ const getDipsutedDatabyId=asyncHandler(async(req,res)=>{
         });
     }
     try {
-        const data = await InvoiceRD.find({
-            dispute: true,
-            updatebydistBoolean: false,
-            reportDefault: true,
-            customerId: id,
-        });
-
+        const data = await InvoiceRD.find(query).skip(skip).limit(limit);
+        const totalCount = await InvoiceRD.countDocuments(query);
         res.json({
             success: true,
-            data: data,
+            data:data,
+            pagination: {
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page,
+                perPage: limit,
+            },
         });
     } catch (error) {
         res.status(500).json({

@@ -3,7 +3,7 @@ const XLSX = require('xlsx');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const DistCentaldata=require('../models/distCentralModel')
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
         // Use an absolute path or path.join for cross-platform compatibility
@@ -105,5 +105,46 @@ const uploadcentalData = asyncHandler(async(req, res) => {
         }
     })
 })
+//@desc get all central data
+//@param /api/user/getCentaldata?page=<page>&limit=<limit>
+//@access private
+const getCentaldata = asyncHandler(async (req, res) => {
+    
+    const page = parseInt(req.query.page) || 1;  
+    const limit = parseInt(req.query.limit) || 100;  
+    const address=req.query.address||'';
+    const licenseNo=req.query.licenseNo || ''
+    const skip = (page - 1) * limit;
 
-module.exports = { uploadcentalData }
+    const filters=[];
+    if(licenseNo)
+    {
+        filters.push({LicenceNumber: { $regex: licenseNo, $options: "i" } })
+        filters.push({ FirmName: { $regex: licenseNo, $options: "i" } })
+    }
+    if(address)
+    {
+        filters.push({Address: { $regex: address, $options: "i" } })
+    }
+    const query=filters.length>0 ? { $or: filters } : {};
+    const dist = await DistCentaldata.find(query)
+        .skip(skip) 
+        .limit(limit);  
+
+
+    const totalCount = await DistCentaldata.countDocuments(query);
+
+  
+    
+    res.json({
+        dist,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+});
+
+module.exports = { uploadcentalData,getCentaldata }

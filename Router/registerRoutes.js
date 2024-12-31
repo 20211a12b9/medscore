@@ -4,8 +4,8 @@ const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, 
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
-const { uploadcentalData } = require("../controllers/distCentalController");
-const { getcountofAdminneedDetails } = require("../controllers/adminDashboard");
+const { uploadcentalData, getCentaldata } = require("../controllers/distCentalController");
+const { getcountofAdminneedDetails, getLikedData } = require("../controllers/adminDashboard");
 
 const router=express.Router();
 
@@ -56,4 +56,6 @@ router.put('/updateNoticeSeenStatus',updateNoticeSeenStatus)
 router.get('/countDisputes',countDisputes)
 router.put('/updateDisputeSeenStatus',updateDisputeSeenStatus)
 router.put('/updateDisputeAdminSeenStatus',updateDisputeAdminSeenStatus)
+router.get('/getCentaldata',getCentaldata)
+router.get('/getLikedData',getLikedData)
 module.exports=router;
