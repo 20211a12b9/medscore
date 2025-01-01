@@ -273,8 +273,9 @@ const getPharmaCentalData = asyncHandler(async (req, res) => {
         LicenceNumber: 1,
         Address: 1,
         ExpDate: 1
-    });
+    }).limit(5);
 
+    
     if (!pharmadata || pharmadata.length === 0) {
         res.status(404);
         throw new Error(`No data found for this license number. You can add customer details from the home screen by clicking '/Addcustomer'.`);
