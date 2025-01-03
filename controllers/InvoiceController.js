@@ -169,7 +169,7 @@ const getInvoiceRDDataforDistUpdate = asyncHandler(async (req, res) => {
 
     // Fetch all invoices matching any of the dl_codes
     const invoiceData = await InvoiceRD.find({
-        pharmadrugliseanceno: { $in: dlCodes } // Match any dl_code
+        pharmadrugliseanceno: { $in: dlCodes },updatebydistBoolean:false // Match any dl_code
     })
     .select({
         pharmadrugliseanceno: 1,
@@ -402,7 +402,7 @@ console.log("distId",distId)
     }
        res.status(200).json("Linked")
 })
-//@desc Invoce of customer
+//@desc InvoceRD of customer
 //@router /api/user/InvoiceReportDefault/:id 
 //@access public
 
@@ -554,7 +554,7 @@ const downloadExcelReport = asyncHandler(async (req, res) => {
 });
 
 //@desc update reportdefault to false
-//@route PUT /api/user/updateReportDefault/:pharmadrugliseanceno/:invoice/:customerId
+//@route PUT /api/user/updateReportDefault
 //@access public
 const updateDefault = asyncHandler(async (req, res) => {
     const { pharmadrugliseanceno, invoice,customerId } = req.body;
