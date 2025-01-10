@@ -398,7 +398,7 @@ console.log("distId",distId)
     if(!alrdylinked)
     {
         res.status(400);
-        throw new Error('You not linked with search licenseNo');
+        throw new Error('You are not linked with this Drug License party . Please link for further information.');
     }
        res.status(200).json("Linked")
 })
@@ -408,12 +408,14 @@ console.log("distId",distId)
 
 const InvoiceReportDefaultController =asyncHandler(async (req,res)=>{
     const customerId = req.params.id;
+    console.log("data came",customerId)
     const {invoice,invoiceAmount,invoiceDate,dueDate,delayDays,pharmadrugliseanceno,reason}=req.body;
     if(!invoice || !invoiceAmount || !invoiceDate || !dueDate || !delayDays || !pharmadrugliseanceno)
     {
         res.status(400)
         return res.json({ message: "All fields are mandatory" });
     }
+    console.log("data")
     const invoice2=await InvoiceRD.create({
         pharmadrugliseanceno,
         customerId,
