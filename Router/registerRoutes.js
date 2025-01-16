@@ -1,10 +1,10 @@
 const express=require("express");
-const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData } = require("../controllers/RegisterController");
+const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData, getMHCentalData } = require("../controllers/RegisterController");
 const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus } = require("../controllers/InvoiceController");
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
-const { uploadcentalData, getCentaldata } = require("../controllers/distCentalController");
+const { uploadcentalData, getCentaldata, uploadMaharastracentalData, getMaharastraCentaldata } = require("../controllers/distCentalController");
 const { getcountofAdminneedDetails, getLikedData } = require("../controllers/adminDashboard");
 
 const router=express.Router();
@@ -46,7 +46,9 @@ router.get('/getBlogs/:id', getBlogsById);
 router.post('/postBlogs', postBlogs);
 router.get('/sampletogetData',sampletogetData)
 router.post('/uploadcentalData',uploadcentalData)
+router.post('/uploadMaharastracentalData',uploadMaharastracentalData)
 router.get('/getPharmaCentalData',getPharmaCentalData)
+router.get('/getMHCentalData',getMHCentalData)
 router.get('/getcountofAdminneedDetails',getcountofAdminneedDetails)
 router.get('/getDipsutedData',getDipsutedData)
 router.get('/getDistributorsData',getDistributorsData)
@@ -57,5 +59,6 @@ router.get('/countDisputes',countDisputes)
 router.put('/updateDisputeSeenStatus',updateDisputeSeenStatus)
 router.put('/updateDisputeAdminSeenStatus',updateDisputeAdminSeenStatus)
 router.get('/getCentaldata',getCentaldata)
+router.get('/getMaharastraCentaldata',getMaharastraCentaldata)
 router.get('/getLikedData',getLikedData)
 module.exports=router;

@@ -5,6 +5,7 @@ const Link=require("../models/linkPharma")
 const DistCentaldata=require("../models/distCentralModel")
 const InvoiceRD=require("../models/invoiceReportDefaultModel")
 const Invoice=require("../models/invoiceModel");
+const MahaData=require("../models/maharastraCentalData")
 //@desc get count of distribuors and customers
 //@router /api/user/getcountofdistributorspharma
 const getcountofAdminneedDetails=asyncHandler(async(req,res)=>{
@@ -16,8 +17,9 @@ const getcountofAdminneedDetails=asyncHandler(async(req,res)=>{
     const notices=await Invoice.countDocuments({})
     const updatebydist=await InvoiceRD.countDocuments({updatebydistBoolean:true})
     const disputesClaimed=await InvoiceRD.countDocuments({dispute:true})
+    const mahaData=await MahaData.countDocuments({})
     const disputescountbyAdminUnseen=await InvoiceRD.countDocuments({dispute:true,seenbyAdmin:false})
-    res.json({"distributors":distributors,"pharamacustomers":pharamacustomers,"centalDataofDLH":centalDataofDLH,"linkedUsers":linkedUsers,"defaulters":defaulters,"notices":notices,"updatebydist":updatebydist,"disputesClaimed":disputesClaimed,"disputescountbyAdminUnseen":disputescountbyAdminUnseen})
+    res.json({"distributors":distributors,"pharamacustomers":pharamacustomers,"centalDataofDLH":centalDataofDLH,"linkedUsers":linkedUsers,"defaulters":defaulters,"notices":notices,"updatebydist":updatebydist,"disputesClaimed":disputesClaimed,"disputescountbyAdminUnseen":disputescountbyAdminUnseen,"mahaData":mahaData})
 })
 //@desc get linked data
 //@router /api/user/getLikedData

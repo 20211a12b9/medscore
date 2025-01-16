@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const DistCentaldata=require('../models/distCentralModel')
+const maharastraCentalData=require('../models/maharastraCentalData')
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
         // Use an absolute path or path.join for cross-platform compatibility
@@ -105,6 +106,88 @@ const uploadcentalData = asyncHandler(async(req, res) => {
         }
     })
 })
+
+
+
+const uploadMaharastracentalData = asyncHandler(async(req, res) => {
+    upload(req, res, async function(err){
+        if(err){
+            return res.status(400).json({
+                message: err.message
+            });
+        }
+        
+        if(!req.file){
+            return res.status(400).json({
+                message: 'Please upload an Excel or CSV file!'
+            });
+        }
+
+        try {
+            let data;
+            const fileExtension = path.extname(req.file.originalname).toLowerCase();
+            const workbook = XLSX.readFile(req.file.path);
+            const sheet_name_list = workbook.SheetNames;
+            
+            // Support both Excel and CSV
+            if (fileExtension === '.csv' || workbook.SheetNames.length === 1) {
+                data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+            } else {
+                // If multiple sheets, allow user to specify which sheet to use
+                return res.status(400).json({
+                    message: 'Please specify which sheet to use for multiple-sheet Excel files',
+                    availableSheets: sheet_name_list
+                });
+            }
+
+            const DistCemtalModel = require('../models/maharastraCentalData')
+
+            // Optional: Add data validation before insertion
+            const validatedData = data.map(item => ({
+                LicenceNumber: item.LicenceNumber || '',
+                COLUMNB: item.COLUMNB || '',
+                COLUMNC: item.COLUMNC || '',
+                COLUMND: item.COLUMND || '',
+                COLUMNE: item.COLUMNE || '',
+                COLUMNF: item.COLUMNF || '',
+                Firm_Name:item.Firm_Name||'',
+                Licences:item.Licences||'',
+                Address:item.Address||'',
+                OwenerName:item.OwenerName||'',
+                Category:item.Category||'',
+                State:item.State||'',
+                Taluk:item.Taluk||'',
+                ExpiryDate: item.ExpiryDate || ''
+            }));
+
+            // Insert data with error handling
+            const insertResult = await DistCemtalModel.insertMany(validatedData)
+                .catch(insertError => {
+                    throw new Error(`Database insertion failed: ${insertError.message}`);
+                });
+            
+            // Remove uploaded file
+            fs.unlinkSync(req.file.path);
+
+            res.status(200).json({
+                message: 'File uploaded and data stored successfully!',
+                recordsInserted: insertResult.length,
+                data: validatedData
+            });
+        } catch(error) {
+            // Remove the file if an error occurs during processing
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            
+            console.error(error);
+            res.status(500).json({
+                message: 'Error processing the file',
+                error: error.message
+            });
+        }
+    })
+})
 //@desc get all central data
 //@param /api/user/getCentaldata?page=<page>&limit=<limit>
 //@access private
@@ -147,4 +230,49 @@ const getCentaldata = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { uploadcentalData,getCentaldata }
+//@desc get all central data
+//@param /api/user/getMaharastraCentaldata?page=<page>&limit=<limit>
+//@access private
+const getMaharastraCentaldata = asyncHandler(async (req, res) => {
+    
+    const page = parseInt(req.query.page) || 1;  
+    const limit = parseInt(req.query.limit) || 100;  
+    const address=req.query.address||'';
+    const licenseNo=req.query.licenseNo || ''
+    const skip = (page - 1) * limit;
+
+    const filters=[];
+    if(licenseNo)
+    {
+        filters.push({LicenceNumber: { $regex: licenseNo, $options: "i" } })
+        filters.push({ COLUMNB: { $regex: licenseNo, $options: "i" } })
+        filters.push({ COLUMNC: { $regex: licenseNo, $options: "i" } })
+        filters.push({ COLUMND: { $regex: licenseNo, $options: "i" } })
+        filters.push({ COLUMNE: { $regex: licenseNo, $options: "i" } })
+        filters.push({ COLUMNF: { $regex: licenseNo, $options: "i" } })
+    }
+    if(address)
+    {
+        filters.push({Address: { $regex: address, $options: "i" } })
+    }
+    const query=filters.length>0 ? { $or: filters } : {};
+    const dist = await maharastraCentalData.find(query)
+        .skip(skip) 
+        .limit(limit);  
+
+
+    const totalCount = await maharastraCentalData.countDocuments(query);
+
+  
+    
+    res.json({
+        dist,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+});
+module.exports = { uploadcentalData,getCentaldata,getMaharastraCentaldata,uploadMaharastracentalData}
