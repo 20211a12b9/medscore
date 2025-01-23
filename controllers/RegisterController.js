@@ -343,7 +343,7 @@ const getDistributorsData = asyncHandler(async (req, res) => {
     const address = req.query.address || '';
     const search = req.query.search || '';
     const filters = JSON.parse(req.query.filters || '[]');
-    
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
     const skip = (page - 1) * limit;
   
     const queryFilters = [];
@@ -368,7 +368,14 @@ const getDistributorsData = asyncHandler(async (req, res) => {
         }))
       });
     }
-  
+    if (endDate) {
+        queryFilters.push({
+          createdAt: {
+            $gte: endDate.toISOString(), // Greater than or equal to the end date
+            $lte: new Date().toISOString() // Less than or equal to the current date
+          }
+        });
+      }
     const query = queryFilters.length > 0 ? { $or: queryFilters } : {};
   
     const dist = await Register2.find(query)
@@ -396,7 +403,7 @@ const getDistributorsData = asyncHandler(async (req, res) => {
     });
   });
   
-//@desc get all dist data
+//@desc get all pharma data
 //@router /api/user/getPharmacyData
 //@access public
 const getPharmacyData=asyncHandler(async(req,res)=>{
@@ -404,6 +411,7 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
     const limit=parseInt(req.query.limit)||100
     const licenseNo=req.query.licenseNo||'';
     const address=req.query.address||'';
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
     const filter=[];
     if(licenseNo)
     {
@@ -414,6 +422,14 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
     {
         filter.push({address:{$regex:address,$options:'i'}})
     }
+    if (endDate) {
+        filter.push({
+          createdAt: {
+            $gte: endDate.toISOString(), // Greater than or equal to the end date
+            $lte: new Date().toISOString() // Less than or equal to the current date
+          }
+        });
+      }
     const query=filter.length>0?{$or:filter}:{};
     const skip=(page-1)*limit
     const dist=await Register.find(query).select({
@@ -421,7 +437,8 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
         dl_code:1,
         phone_number:1,
         address:1,
-        expiry_date:1
+        expiry_date:1,
+        createdAt:1
     }).skip(skip).limit(limit)
     const totalCount=await Register.countDocuments(query);
     res.json({dist,
