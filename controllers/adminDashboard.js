@@ -18,7 +18,7 @@ const getcountofAdminneedDetails=asyncHandler(async(req,res)=>{
     const updatebydist=await InvoiceRD.countDocuments({updatebydistBoolean:true})
     const disputesClaimed=await InvoiceRD.countDocuments({dispute:true})
     const mahaData=await MahaData.countDocuments({})
-    const disputescountbyAdminUnseen=await InvoiceRD.countDocuments({dispute:true,seenbyAdmin:false})
+    const disputescountbyAdminUnseen=await InvoiceRD.countDocuments({dispute:true,seenbyAdmin:false,updatebydistBoolean:false})
     res.json({"distributors":distributors,"pharamacustomers":pharamacustomers,"centalDataofDLH":centalDataofDLH,"linkedUsers":linkedUsers,"defaulters":defaulters,"notices":notices,"updatebydist":updatebydist,"disputesClaimed":disputesClaimed,"disputescountbyAdminUnseen":disputescountbyAdminUnseen,"mahaData":mahaData})
 })
 //@desc get linked data
