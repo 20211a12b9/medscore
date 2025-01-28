@@ -29,7 +29,7 @@ const registerSchema2 =mongoose.Schema(
     },
     gstno:{
         type:String,
-        required:[true,"password is mandatory"]
+        required:false
     },
     expiry_date:{
         type:String,

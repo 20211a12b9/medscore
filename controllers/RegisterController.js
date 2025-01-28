@@ -70,7 +70,7 @@ const registerController= asyncHandler(async (req,res)=>{
 const registerController2= asyncHandler(async (req,res)=>{
     const { pharmacy_name, email, phone_number, dl_code, address, password, gstno,expiry_date,distributor_types } = req.body;
     console.log("body",req.body)
-    if(!pharmacy_name || !phone_number || !dl_code || !address || !password || !gstno)
+    if(!pharmacy_name || !phone_number || !dl_code || !address || !password )
     {
         res.status(400)
         return res.json({ message: "All fields are mandatory" });
