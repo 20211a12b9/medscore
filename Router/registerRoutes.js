@@ -5,8 +5,8 @@ const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
 const { uploadcentalData, getCentaldata, uploadMaharastracentalData, getMaharastraCentaldata } = require("../controllers/distCentalController");
-const { getcountofAdminneedDetails, getLikedData } = require("../controllers/adminDashboard");
-
+const { getcountofAdminneedDetails, getAdminLikedData } = require("../controllers/adminDashboard");
+const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin } = require('../controllers/adminDashboard'); 
 const router=express.Router();
 
 
@@ -60,5 +60,11 @@ router.put('/updateDisputeSeenStatus',updateDisputeSeenStatus)
 router.put('/updateDisputeAdminSeenStatus',updateDisputeAdminSeenStatus)
 router.get('/getCentaldata',getCentaldata)
 router.get('/getMaharastraCentaldata',getMaharastraCentaldata)
-router.get('/getLikedData',getLikedData)
+router.get('/getAdminLikedData',getAdminLikedData)
+router.get('/getAdminDefaults',getAdminDefaults)
+router.get('/getAdminNotices',getAdminNotices)
+router.get('/getDispytedBydistforAdmin',getDispytedBydistforAdmin)
+router.get('/getDispytesClaimedforAdmin',getDispytesClaimedforAdmin)
+
+
 module.exports=router;
