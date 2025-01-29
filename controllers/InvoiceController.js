@@ -12,6 +12,7 @@ const multer = require('multer');
 const path = require('path');
 const Outstanding=require("../models/outstanding");
 const { ObjectId } = require('mongodb');
+const { isValidObjectId } = mongoose;
 
 //@desc Invoce of customer
 //@router /api/user/Invoice/:id 
@@ -1346,6 +1347,51 @@ const updateDisputeAdminSeenStatus = asyncHandler(async (req, res) => {
         throw new Error(`Failed to update notices: ${error.message}`);
     }
 });
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus}
+
+// @desc get all liked pharma details to that distributor
+// @router /api/user/distributorConnections
+// @access public
+  const getDistributorConnections = asyncHandler(async (req, res) => {
+  try {
+    // 1. Fetch all Link documents
+    const {distId}=req.query
+    console.log(distId)
+    const linkDocs = await Link.find({distId}).select({  pharmaId: 1 });
+    
+    // 2. Extract unique IDs for bulk queries
+    const uniquePharmaIds = [...new Set(linkDocs
+      .map(doc => doc.pharmaId)
+      .filter(id => isValidObjectId(id)))];
+ 
+
+    // 3. Fetch all pharmacy and distributor data in parallel with bulk queries
+    const [pharmacies] = await Promise.all([
+        Register.find({ _id: { $in: uniquePharmaIds } })
+          .select('_id pharmacy_name dl_code phone_number address expiry_date')
+          .then(docs => Object.fromEntries(
+            docs.map(doc => [
+              doc._id.toString(), // Key
+              {
+                pharmacy_name: doc.pharmacy_name,
+                dl_code: doc.dl_code,
+                phone_number: doc.phone_number,
+                address: doc.address,
+                expiry_date: doc.expiry_date
+              } // Value as an object
+            ])
+          )),
+      ]);
+      
+
+    const count =await Link.countDocuments({distId:distId})
+
+    res.json({ Defaults: pharmacies ,count:count});
+
+  } catch (error) {
+    console.error("Error fetching data: ", error);
+    res.status(500).json({ message: "Server error occurred" });
+  }
+});
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections}
 
 
