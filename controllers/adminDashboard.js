@@ -176,7 +176,6 @@ const getAdminDefaults = asyncHandler(async (req, res) => {
         ))
     ]);
 
-    // 4. Map the data together using the lookup objects
     const combinedData = linkDocs.map(doc => ({
       ...doc.toObject(),
       pharmacy_name: isValidObjectId(doc.pharmaId) 
