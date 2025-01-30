@@ -20,8 +20,8 @@ const registerController= asyncHandler(async (req,res)=>{
         return res.json({ message: "All fields are mandatory" });
     }
     const alreadyAvaliable= await Register.findOne({dl_code});
-    const alreadyAvaliable2= await Register2.findOne({dl_code});
-    if(alreadyAvaliable || alreadyAvaliable2)
+   
+    if(alreadyAvaliable )
     {
         res.status(400)
         return res.json({ message: "user Alredy exist" });
@@ -75,9 +75,9 @@ const registerController2= asyncHandler(async (req,res)=>{
         res.status(400)
         return res.json({ message: "All fields are mandatory" });
     }
-    const alreadyAvaliable= await Register.findOne({dl_code});
+
     const alreadyAvaliable2= await Register2.findOne({dl_code});
-    if(alreadyAvaliable || alreadyAvaliable2)
+    if(alreadyAvaliable2)
     {
         res.status(400)
         return res.json({ message: "user Alredy exist" });
@@ -121,17 +121,76 @@ const registerController2= asyncHandler(async (req,res)=>{
     
 })
 
+//@desc check if user id registred in both 
+//@router /api/user/checkIfLoginedinboth
+//@access public
+const checkIfLoggedinbith=asyncHandler(async(req,res)=>{
+    const {dl_code,password}=req.body;
+    const login1=await Register.findOne({dl_code});
+   const login2=await Register2.findOne({dl_code});
+   if(login1 && login2)
+   {
+     res.status(200).json({status:true})
+   }
+   res.status(200).json({status:false})
+})
+
+
 //@desc Login the user
 //@router /api/user/login
-//access public
+//@access public
 
 const loginUser = asyncHandler(async (req,res)=>{
-   const {dl_code,password}=req.body;
+   const {dl_code,password,type}=req.body;
    if(!dl_code || !password)
    {
     res.status(400)
         return res.json({ message: "All fields are mandatory" });
    }
+   if(type=="Pharma")
+   {
+    const login1=await Register.findOne({dl_code});
+    
+    if(login1 && (await bcrypt.compare(password,login1.password)))
+    {
+ 
+      const accesstoken=await jwt.sign({
+         login1:{
+             dl_code:login1.dl_code,
+             pharmacy_name:login1.pharmacy_name,
+             email:login1.email,
+             phone_number:login1.phone_number,
+         },
+ 
+      },process.env.ACCESS_TOKEN_SECRET,
+      {expiresIn:"15min"}
+     );
+     res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
+    }
+   }
+   else if(type=="Dist")
+   {
+    
+    const login2=await Register2.findOne({dl_code});
+   
+    if(login2 && (await bcrypt.compare(password,login2.password)))
+        {
+     
+          const accesstoken=await jwt.sign({
+             login2:{
+                 dl_code:login2.dl_code,
+                 pharmacy_name:login2.pharmacy_name,
+                 email:login2.email,
+                 phone_number:login2.phone_number,
+             },
+     
+          },process.env.ACCESS_TOKEN_SECRET,
+          {expiresIn:"15min"}
+         );
+         res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
+        }
+   }
+   else{
    const login1=await Register.findOne({dl_code});
    const login2=await Register2.findOne({dl_code});
    const login3=await Admin.findOne({dl_code})
@@ -186,6 +245,7 @@ const loginUser = asyncHandler(async (req,res)=>{
             res.status(401);
             return res.json({ message: "Invalid credentials" });
           }
+        }
         
        
 })
@@ -450,4 +510,4 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
         }
     })
 })
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData}
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith}
