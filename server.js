@@ -1,10 +1,11 @@
 const express = require("express");
 const connectDb = require("./config/dbConnection");
+const Register=require("./models/registerModel")
 const errorHandler = require("./middleware/errorHandlor");
 const dotenv = require("dotenv").config();
 const cors = require("cors");
 const path = require("path");
-
+const mongoose=require("mongoose")
 connectDb();
 const app = express();
 // app.use(express.json());
@@ -22,9 +23,12 @@ app.use(express.json({
         }
     }
 }));
+// In your server.js
+
+
 app.use(express.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
 
-const port = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5001;
 
 // CORS options
 const corsOptions = {
@@ -47,8 +51,46 @@ app.use(errorHandler);
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
+const startServer = async () => {
+    try {
+        // Check if MongoDB is already connected
+        if (mongoose.connection.readyState === 1) {
+            console.log('MongoDB already connected');
+            await migratePhonenumbers();
+        } else {
+            // Wait for MongoDB connection event
+            mongoose.connection.once('connected', async () => {
+                console.log('MongoDB connected');
+                await migratePhonenumbers();
+            });
+        }
+        
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Server startup error:', error);
+    }
+};
+
+// Update the migration function
+const migratePhonenumbers = async () => {
+    try {
+        const result = await Register.updateMany(
+            { phone_number: { $type: "string" } },
+            [
+                {
+                    $set: {
+                        phone_number: ["$phone_number"]
+                    }
+                }
+            ]
+        );
+        console.log("Migration completed. Updated documents:", result.modifiedCount);
+    } catch (error) {
+        console.error("Migration error:", error);
+    }
+};
 
 // Start the server
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+startServer();

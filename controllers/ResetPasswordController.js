@@ -15,11 +15,34 @@ const ResetPassword = asyncHandler(async (req, res) => {
         const { dl_code } = req.body;
 
         // Find user by dl_code
-        const user = await Register.findOne({ dl_code });
-       
-        
+        const user = await Register.findOne({ dl_code }).select({
+            pharmacy_name: 1,
+            email: 1,
+            phone_number: 1,
+            dl_code: 1,
+            delayDays: 1,
+            address: 1,
+            expiry_date: 1,
+            createdAt: 1
+        }).lean();;
+        if (user && user.phone_number) {
+            user.phone_number = user.phone_number[0][0].toString()
+        }
+         console.log("user",user)
         if (!user) {
-            const user2 = await Register2.findOne({ dl_code });
+            const user2 = await Register2.findOne({ dl_code }).select({
+                pharmacy_name: 1,
+                email: 1,
+                phone_number: 1,
+                dl_code: 1,
+                delayDays: 1,
+                address: 1,
+                expiry_date: 1,
+                createdAt: 1
+            }).lean();;
+            if (user2 && user2.phone_number) {
+                user2.phone_number = user2.phone_number[0][0].toString()
+            }
             if(!user2)
             {
                 return res.status(404).json({
@@ -28,7 +51,8 @@ const ResetPassword = asyncHandler(async (req, res) => {
                 });
 
             }
-            const resetToken = user2.generatePasswordReset();
+            const generatePasswordReset = Register.schema.methods.generatePasswordReset;
+const resetToken = generatePasswordReset.call(user2);  
             console.log("Generated resetToken:", resetToken);
             
             // Save the user with the new reset token
@@ -68,11 +92,15 @@ const ResetPassword = asyncHandler(async (req, res) => {
 
         }else{
              // Generate and save reset token
-        const resetToken = user.generatePasswordReset();
+             const generatePasswordReset = Register.schema.methods.generatePasswordReset;
+             const resetToken = generatePasswordReset.call(user);  
         console.log("Generated resetToken:", resetToken);
         
-        // Save the user with the new reset token
-        await user.save();
+        await Register2.findOneAndUpdate(
+            { dl_code },
+            { resetPasswordToken: resetToken, resetPasswordExpires: Date.now() + 3600000 },  // 1 hour expiration
+            { new: true }
+        );
         console.log("User after saving:", {
             resetToken: user.resetPasswordToken,
             expires: user.resetPasswordExpires
@@ -101,7 +129,11 @@ const ResetPassword = asyncHandler(async (req, res) => {
             // If SMS fails, reset the token
             user.resetPasswordToken = null;
             user.resetPasswordExpires = null;
-            await user.save();
+            await Register.findOneAndUpdate(
+                { dl_code },
+                { resetPasswordToken: resetToken, resetPasswordExpires: Date.now() + 3600000 },  // 1 hour expiration
+                { new: true }
+            );
             
             throw new Error('Failed to send reset code via SMS. Please try again.');
         }

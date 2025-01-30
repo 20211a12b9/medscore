@@ -1,6 +1,6 @@
 const express=require("express");
-const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData, getMHCentalData, checkIfLoggedinbith } = require("../controllers/RegisterController");
-const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus,getDistributorConnections } = require("../controllers/InvoiceController");
+const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData, getMHCentalData, checkIfLoggedinbith, addPhonenumber } = require("../controllers/RegisterController");
+const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus,getDistributorConnections, getPharmaData2 } = require("../controllers/InvoiceController");
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
@@ -10,6 +10,7 @@ const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesCl
 const router=express.Router();
 
 
+
 router.post("/Pharmacyregister",registerController)
 router.post("/Distributorregister",registerController2)
 router.post("/Invoice/:id",InvoiceController)
@@ -17,6 +18,7 @@ router.post("/InvoiceReportDefault/:id",InvoiceReportDefaultController)
 router.post("/linkPharma/:id",linkpharmaController)
 router.get("/getInvoice",getInvoiceData)
 router.get("/getpharmaData",getPharmaData)
+router.get("/getPharmaData2",getPharmaData2)
 router.get("/getInvoiceRD/",getInvoiceRDData)
 router.get("/getInvoiceRDforDistUpdate",getInvoiceRDDataforDistUpdate)
 router.get("/getPharamaDatainPharma/:id",getPData)
@@ -67,5 +69,5 @@ router.get('/getDispytedBydistforAdmin',getDispytedBydistforAdmin)
 router.get('/getDispytesClaimedforAdmin',getDispytesClaimedforAdmin)
 router.get('/getDistributorConnections',getDistributorConnections)
 router.post('/checkIfLoggedinbith',checkIfLoggedinbith)
-
+router.post('/addPhonenumber/:id',addPhonenumber)
 module.exports=router;

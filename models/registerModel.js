@@ -11,11 +11,12 @@ const registerSchema = mongoose.Schema(
         },
         email: {
             type: String,
-           
+            
         },
-        phone_number: {
-            type: String,
-            required: [true, "phone_number is mandatory"]
+        phone_number: {  
+            type: [String],  
+            required: [true, "At least one phone number is mandatory"],
+           
         },
         dl_code: {
             type: String,

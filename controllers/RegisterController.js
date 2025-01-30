@@ -499,9 +499,13 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
         address:1,
         expiry_date:1,
         createdAt:1
-    }).skip(skip).limit(limit)
+    }).skip(skip).limit(limit).lean()
     const totalCount=await Register.countDocuments(query);
-    res.json({dist,
+    const transformedData = dist.map(doc => ({
+      ...doc,
+      phone_number: Array.isArray(doc.phone_number) ? doc.phone_number : [doc.phone_number].filter(Boolean)
+  }));
+    res.json({dist:transformedData,
         pagination:{
            totalCount:totalCount,
            totalPages:Math.ceil(totalCount/limit),
@@ -510,4 +514,65 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
         }
     })
 })
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith}
+
+
+
+// @desc add phone number in pharma
+// @router /api/user/addphonenumber/:id
+// @access public
+
+const addPhonenumber = asyncHandler(async(req, res) => {
+  try {
+      const { phoneNumber } = req.body;
+      const id = req.params.id;
+      
+      console.log("Received request - Phone:", phoneNumber, "ID:", id);
+      
+      // Validate inputs
+      if (!phoneNumber || !id) {
+          console.log("Missing required fields");
+          return res.status(400).json({
+              success: false,
+              message: 'Phone number and ID are required'
+          });
+      }
+
+      
+
+      // First check if pharmacy exists
+      const existingPharma = await Register.findById(id);
+      if (!existingPharma) {
+          console.log("Pharmacy not found");
+          return res.status(404).json({
+              success: false,
+              message: 'Pharmacy not found'
+          });
+      }
+
+      // Update the pharmacy
+      const pharma = await Register.findByIdAndUpdate(
+          id,
+          { $push: { phone_number: phoneNumber } },
+          { 
+              new: true,
+              runValidators: true
+          }
+      );
+
+      console.log("Updated pharmacy:", pharma);
+
+      return res.status(200).json({
+          success: true,
+          data: pharma
+      });
+
+  } catch (error) {
+      console.error("Error in addPhonenumber:", error);
+      return res.status(500).json({
+          success: false,
+          message: error.message
+      });
+  }
+});
+
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith,addPhonenumber}

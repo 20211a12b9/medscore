@@ -341,6 +341,73 @@ const linkpharmaController =asyncHandler(async(req,res)=>{
             res.json({message:"failed"})
         }
 })
+//@desc get pharma data
+//@router /api/user/getPharmaData2/
+//access public
+const getPharmaData2 = asyncHandler(async (req, res) => {
+    const licenseNo = req.query.licenseNo;
+    const distId = req.query.customerId;
+
+    console.log("licenseNo", licenseNo);
+    console.log("distId", distId);
+
+    // Validate license number
+    if (!licenseNo) {
+        res.status(400);
+        throw new Error('Pharmacy drug license number is required');
+    }
+
+    // First find matching pharmacies
+    const pharmadata = await Register.find({ 
+        $or: [
+            { pharmacy_name: { $regex: licenseNo, $options: "i" } },
+            { dl_code: { $regex: licenseNo, $options: "i" } }
+        ]
+    }).select({
+        pharmacy_name: 1,
+        email: 1,
+        phone_number: 1,
+        dl_code: 1,
+        delayDays: 1,
+        address: 1,
+        expiry_date: 1,
+        createdAt: 1
+    }).lean(); // Added lean() for better performance
+
+    if (!pharmadata || pharmadata.length === 0) {
+        res.status(404);
+        throw new Error(`No data found for this license number. You can add customer details from the home screen by clicking '/Addcustomer'.`);
+    }
+
+    // Check link status for each pharmacy and transform phone_number
+    const pharmaciesWithLinkStatus = await Promise.all(
+        pharmadata.map(async (pharmacy) => {
+            const alreadyLinked = await Link.findOne({ 
+                pharmaId: pharmacy._id, 
+                distId: distId 
+            });
+            
+            return {
+                ...pharmacy,
+                // Ensure phone_number is always an array
+                phone_number: Array.isArray(pharmacy.phone_number) 
+                    ? pharmacy.phone_number 
+                    : [pharmacy.phone_number].filter(Boolean),
+                isLinked: !!alreadyLinked
+            };
+        })
+    );
+
+    // Add debug logging
+    console.log("Transformed data sample:", 
+        JSON.stringify(pharmaciesWithLinkStatus[0], null, 2));
+
+    res.status(200).json({
+        success: true,
+        count: pharmaciesWithLinkStatus.length,
+        data: pharmaciesWithLinkStatus
+    });
+});
 //@desc get invoice data
 //@router /api/user/getPharmaData/
 //access public
@@ -356,6 +423,9 @@ const getPharmaData = asyncHandler(async (req, res) => {
 
     let pharmadata;
     
+    // Add debug logging before the query
+    console.log("Searching for:", licenseNo);
+
     // Use $regex with case-insensitive partial matching for both pharmacy_name and dl_code
     pharmadata = await Register.find({ 
         $or: [
@@ -371,17 +441,26 @@ const getPharmaData = asyncHandler(async (req, res) => {
         address: 1,
         expiry_date: 1,
         createdAt: 1
-    });
+    }).lean(); // Add lean() for better performance
+
+    // Add debug logging after the query
+    console.log("Raw query result:", JSON.stringify(pharmadata, null, 2));
 
     if (!pharmadata || pharmadata.length === 0) {
         res.status(404);
         throw new Error(`No data found for this license number. You can add customer details from the home screen by clicking '/Addcustomer'.`);
     }
 
+    // Add data transformation to ensure phone_number is always an array
+    const transformedData = pharmadata.map(doc => ({
+        ...doc,
+        phone_number: Array.isArray(doc.phone_number) ? doc.phone_number : [doc.phone_number].filter(Boolean)
+    }));
+
     res.status(200).json({
         success: true,
-        count: pharmadata.length,
-        data: pharmadata
+        count: transformedData.length,
+        data: transformedData
     });
 });
 //@desc get invoice data
@@ -389,7 +468,7 @@ const getPharmaData = asyncHandler(async (req, res) => {
 //access public
 const checkIfLinked=asyncHandler(async (req,res)=>{
     const { pharmaId,distId } = req.params;
-console.log("distId",distId)
+
     // Validate license number
     if (!pharmaId || !distId) {
         res.status(400);
@@ -403,13 +482,16 @@ console.log("distId",distId)
     }
        res.status(200).json("Linked")
 })
+
+
+
 //@desc InvoceRD of customer
 //@router /api/user/InvoiceReportDefault/:id 
 //@access public
 
 const InvoiceReportDefaultController =asyncHandler(async (req,res)=>{
     const customerId = req.params.id;
-    console.log("data came",customerId)
+   
     const {invoice,invoiceAmount,invoiceDate,dueDate,delayDays,pharmadrugliseanceno,reason}=req.body;
     if(!invoice || !invoiceAmount || !invoiceDate || !dueDate || !delayDays || !pharmadrugliseanceno)
     {
@@ -1367,14 +1449,14 @@ const updateDisputeAdminSeenStatus = asyncHandler(async (req, res) => {
     // 3. Fetch all pharmacy and distributor data in parallel with bulk queries
     const [pharmacies] = await Promise.all([
         Register.find({ _id: { $in: uniquePharmaIds } })
-          .select('_id pharmacy_name dl_code phone_number address expiry_date')
+          .select('_id pharmacy_name dl_code phone_number address expiry_date').lean()
           .then(docs => Object.fromEntries(
             docs.map(doc => [
               doc._id.toString(), // Key
               {
                 pharmacy_name: doc.pharmacy_name,
                 dl_code: doc.dl_code,
-                phone_number: doc.phone_number,
+                phone_number: [doc.phone_number],
                 address: doc.address,
                 expiry_date: doc.expiry_date
               } // Value as an object
@@ -1392,6 +1474,6 @@ const updateDisputeAdminSeenStatus = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error occurred" });
   }
 });
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections}
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections,getPharmaData2}
 
 
