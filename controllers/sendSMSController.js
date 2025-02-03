@@ -12,9 +12,9 @@ const sendSms = asyncHandler(async (req, res) => {
     
     const { phone, message } = req.body;
     console.log("got msg",phone)
-    ph=919347070310	;
+   
     const response = await fetch(
-      `https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=uewziuRKDUWctgdrHdXm5g&senderid=MEDSCR&channel=2&DCS=0&flashsms=0&number=${ph}&text=${encodeURIComponent(message)}&route=1`
+      `https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=uewziuRKDUWctgdrHdXm5g&senderid=MEDSCR&channel=2&DCS=0&flashsms=0&number=${phone}&text=${encodeURIComponent(message)}&route=1`
     );
     
     const data = await response.json();
