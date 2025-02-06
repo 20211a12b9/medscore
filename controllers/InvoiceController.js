@@ -2,6 +2,7 @@ const asyncHandler=require("express-async-handler")
 const Invoice=require("../models/invoiceModel");
 const Link=require("../models/linkPharma")
 const Register=require("../models/registerModel")
+const Register2=require("../models/registerModel2")
 const InvoiceRD=require("../models/invoiceReportDefaultModel")
 const ExcelJS = require('exceljs');
 const { default: mongoose } = require("mongoose");
@@ -52,6 +53,9 @@ const InvoiceController =asyncHandler(async (req,res)=>{
 //access public
 const getInvoiceData=asyncHandler(async (req,res)=>{
     const  licenseNo  = req.query.licenseNo;
+    const page=parseInt(req.query.page)|| 1
+    const limit=parseInt(req.query.limit)|| 15
+    const skip=(page-1)*limit;
 console.log("licenseNo",licenseNo)
     // Validate license number
     if (!licenseNo) {
@@ -60,7 +64,7 @@ console.log("licenseNo",licenseNo)
     }
 
     // Find all invoices matching the license number
-    const invoiceData = await Invoice.find({ pharmadrugliseanceno: licenseNo})
+    const invoiceData = await Invoice.find({ pharmadrugliseanceno: licenseNo,reportDefault:false})
     .select({
         pharmadrugliseanceno:1,
          invoice: 1,
@@ -71,21 +75,33 @@ console.log("licenseNo",licenseNo)
          invoiceDate:1,
          reason:1,
          createdAt:1,
-         seen:1
-    }).lean()       
+         seen:1,
+         
+    })
+    .sort({createdAt:-1})
+    .skip(skip)
+    .limit(limit)
+    .lean()       
 
     if (!invoiceData || invoiceData.length === 0) {
         res.status(404);
         throw new Error('No invoices found for this license number');
     }
     const serializedData = invoiceData.map((invoice, index) => ({
-        serialNo: index + 1, // Add serial number starting from 1
+        serialNo: skip + index + 1, // Add serial number starting from 1
         ...invoice
     }));
+    const totalCount=await Invoice.countDocuments({ pharmadrugliseanceno: licenseNo,reportDefault:false})
     res.status(200).json({
         success: true,
         count: serializedData.length,
-        data: serializedData
+        data: serializedData,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
     });
 })
 //@desc get invoiceRD data
@@ -93,6 +109,9 @@ console.log("licenseNo",licenseNo)
 //access public
 const getInvoiceRDData=asyncHandler(async (req,res)=>{
     const  licenseNo  = req.query.licenseNo;
+    const page=parseInt(req.query.page)||1
+    const limit=parseInt(req.query.limit)||15
+    const skip=(page-1)*limit;
 console.log("licenseNo",licenseNo)
     // Validate license number
     if (!licenseNo) {
@@ -101,7 +120,7 @@ console.log("licenseNo",licenseNo)
     }
 
     // Find all invoices matching the license number
-    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,reportDefault:true, })
+    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,reportDefault:true }).skip(skip).limit(limit).sort({createdAt:-1})
     .select({
         pharmadrugliseanceno:1,
          invoice: 1,
@@ -127,15 +146,21 @@ console.log("licenseNo",licenseNo)
         res.status(404);
         throw new Error('No invoices found for this license number');
     }
-
+   const totalCount=await InvoiceRD.countDocuments({ pharmadrugliseanceno: licenseNo,reportDefault:true })
     const serialData=invoiceData.map((invoice,index)=>({
-        serialNo:index+1,
+        serialNo:skip+index+1,
         ...invoice
     }))
     res.status(200).json({
         success: true,
         count: serialData.length,
-        data: serialData
+        data: serialData,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
     });
 })
 //@desc get invoiceRD data
@@ -348,9 +373,7 @@ const getPharmaData2 = asyncHandler(async (req, res) => {
     const licenseNo = req.query.licenseNo;
     const distId = req.query.customerId;
 
-    console.log("licenseNo", licenseNo);
-    console.log("distId", distId);
-
+  
     // Validate license number
     if (!licenseNo) {
         res.status(400);
@@ -398,9 +421,7 @@ const getPharmaData2 = asyncHandler(async (req, res) => {
         })
     );
 
-    // Add debug logging
-    console.log("Transformed data sample:", 
-        JSON.stringify(pharmaciesWithLinkStatus[0], null, 2));
+    
 
     res.status(200).json({
         success: true,
@@ -413,7 +434,7 @@ const getPharmaData2 = asyncHandler(async (req, res) => {
 //access public
 const getPharmaData = asyncHandler(async (req, res) => {
     const licenseNo = req.query.licenseNo;
-    console.log("licenseNo", licenseNo)
+    
 
     // Validate license number
     if (!licenseNo) {
@@ -423,8 +444,7 @@ const getPharmaData = asyncHandler(async (req, res) => {
 
     let pharmadata;
     
-    // Add debug logging before the query
-    console.log("Searching for:", licenseNo);
+   
 
     // Use $regex with case-insensitive partial matching for both pharmacy_name and dl_code
     pharmadata = await Register.find({ 
@@ -444,7 +464,6 @@ const getPharmaData = asyncHandler(async (req, res) => {
     }).lean(); // Add lean() for better performance
 
     // Add debug logging after the query
-    console.log("Raw query result:", JSON.stringify(pharmadata, null, 2));
 
     if (!pharmadata || pharmadata.length === 0) {
         res.status(404);
@@ -642,13 +661,11 @@ const downloadExcelReport = asyncHandler(async (req, res) => {
 //@route PUT /api/user/updateReportDefault
 //@access public
 const updateDefault = asyncHandler(async (req, res) => {
-    const { pharmadrugliseanceno, invoice,customerId } = req.body;
-    
+    const {_id } = req.body;
+   
     const result = await InvoiceRD.updateOne(
         {
-            pharmadrugliseanceno: pharmadrugliseanceno,
-            invoice: invoice,
-            customerId:customerId
+            _id:_id
         },
         {
             $set: { updatebydistBoolean: true,
@@ -677,18 +694,53 @@ const updateDefault = asyncHandler(async (req, res) => {
         });
     }
 });
+//@desc update reportdefault to true(means after sending remainder customer gave payment so making it as received)
+//@route PUT /api/user/updateNotice
+//@access public
+const updateNotice = asyncHandler(async (req, res) => {
+    const {_id } = req.body;
+   
+    const result = await Invoice.updateOne(
+        {
+            _id:_id
+        },
+        {
+            $set: { reportDefault: true
+             }
+            
+        }
+    );
+
+    if (result.matchedCount === 0) {
+        res.status(404);
+        throw new Error('No document found with the given pharmadrugliseanceno and invoice');
+    }
+
+    if (result.modifiedCount === 1) {
+        res.status(200).json({
+            success: true,
+            message: 'Report remainder updated successfully'
+        });
+    } else {
+        res.status(200).json({
+            success: true,
+            message: 'Document already up to date'
+        });
+    }
+});
 //@desc update reportdefault to false
 //@route PUT /api/user/updateReportDefaultReject/:pharmadrugliseanceno/:invoice/:customerId
 //@access public
 const updateDefaultReject = asyncHandler(async (req, res) => {
     
-    const {  pharmadrugliseanceno, invoice, customerId } = req.body;
+    const {  pharmadrugliseanceno, invoice, customerId ,_id} = req.body;
     console.log("rejectred----")
     const result = await InvoiceRD.updateOne(
         {
             pharmadrugliseanceno: pharmadrugliseanceno,
             invoice: invoice,
-            customerId:customerId
+            customerId:customerId,
+            _id:_id
         },
         {
             $set: { updatebydistBoolean: true,
@@ -723,7 +775,7 @@ const updateDefaultReject = asyncHandler(async (req, res) => {
 const disputebyPharma = asyncHandler(async (req, res) => {
     // Input validation
     
-    const { reasonforDispute, pharmadrugliseanceno, invoice, customerId } = req.body;
+    const { reasonforDispute, pharmadrugliseanceno, invoice, customerId ,_id} = req.body;
 
     if (!pharmadrugliseanceno || !invoice || !customerId) {
         res.status(400);
@@ -741,7 +793,8 @@ const disputebyPharma = asyncHandler(async (req, res) => {
             {
                 pharmadrugliseanceno: pharmadrugliseanceno,
                 invoice: invoice,
-                customerId: new ObjectId(customerId)
+                customerId: new ObjectId(customerId),
+                _id:_id
             },
             {
                 $set: {
@@ -865,52 +918,203 @@ updateReportDefaultStatus();
 //@desc get invoice done by dist by id
 //@router get/api/user/getinvoicesbydistId/:id
 //access public
-const getinvoicesbydistId=asyncHandler(async(req,res)=>{
-    const customerId=req.params.id;
-    if(!customerId)
-    {
-        res.status(400)
-        throw new Error("id required")
-        
-    }
-    const invoices=await Invoice.find({customerId:customerId})
+const getinvoicesbydistId = asyncHandler(async (req, res) => {
+    const customerId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
 
-    const invoicewithserialnumbers=invoices.map((invoice,index)=>({
-           serialNo:index+1,
-           ...invoice.toObject()
-    }))
-    res.status(200).json({
-        success: true,
-        count: invoicewithserialnumbers.length,
-        data: invoicewithserialnumbers
+    if (!customerId) {
+        res.status(400);
+        throw new Error("id required");
+    }
+
+    // 1. Fetch invoices
+    const invoices = await Invoice.find({ customerId,reportDefault:false })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(); // .lean() returns plain JS objects, no need for .toObject()
+
+    // 2. Extract unique pharmacy license numbers
+    const uniqueLicenseNumbers = [...new Set(invoices.map(invoice => invoice.pharmadrugliseanceno))];
+
+    // 3. Fetch pharmacy details
+    const pharmacyDetails = await Register.find({ dl_code: { $in: uniqueLicenseNumbers } })
+        .select('pharmacy_name dl_code phone_number address')
+        .lean();
+
+    // 4. Create a map for quick lookup
+    const pharmacyMap = pharmacyDetails.reduce((acc, pharmacy) => {
+        acc[pharmacy.dl_code] = pharmacy;
+        return acc;
+    }, {});
+
+    // 5. Count total invoices for pagination
+    const totalCount = await Invoice.countDocuments({ customerId });
+
+    // 6. Merge invoice data with pharmacy details
+    const invoiceWithDetails = invoices.map((invoice, index) => {
+        const pharmacyInfo = pharmacyMap[invoice.pharmadrugliseanceno] || {};
+
+        return {
+            serialNo: skip + index + 1, // Adjust serial numbers for pagination
+            ...invoice,
+            pharmacy_name: pharmacyInfo.pharmacy_name || 'N/A',
+            pharmacy_phone: pharmacyInfo.phone_number || 'N/A',
+            pharmacy_address: pharmacyInfo.address || 'N/A'
+        };
     });
 
-})
+    // 7. Send response
+    res.status(200).json({
+        success: true,
+        count: invoiceWithDetails.length,
+        data: invoiceWithDetails,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+});
+//@desc get invoice done by dist by id
+//@router get/api/user/getDetailedinvoicesbydistId/:id
+//access public
+const getDetailedinvoicesbydistId = asyncHandler(async (req, res) => {
+    const customerId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
 
+    if (!customerId) {
+        res.status(400);
+        throw new Error("id required");
+    }
+
+    // 1. Fetch invoices
+    const invoices = await Invoice.find({ customerId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(); // .lean() returns plain JS objects, no need for .toObject()
+
+    // 2. Extract unique pharmacy license numbers
+    const uniqueLicenseNumbers = [...new Set(invoices.map(invoice => invoice.pharmadrugliseanceno))];
+
+    // 3. Fetch pharmacy details
+    const pharmacyDetails = await Register.find({ dl_code: { $in: uniqueLicenseNumbers } })
+        .select('pharmacy_name dl_code phone_number address')
+        .lean();
+
+    // 4. Create a map for quick lookup
+    const pharmacyMap = pharmacyDetails.reduce((acc, pharmacy) => {
+        acc[pharmacy.dl_code] = pharmacy;
+        return acc;
+    }, {});
+
+    // 5. Count total invoices for pagination
+    const totalCount = await Invoice.countDocuments({ customerId });
+
+    // 6. Merge invoice data with pharmacy details
+    const invoiceWithDetails = invoices.map((invoice, index) => {
+        const pharmacyInfo = pharmacyMap[invoice.pharmadrugliseanceno] || {};
+
+        return {
+            serialNo: skip + index + 1, // Adjust serial numbers for pagination
+            ...invoice,
+            pharmacy_name: pharmacyInfo.pharmacy_name || 'N/A',
+            pharmacy_phone: pharmacyInfo.phone_number || 'N/A',
+            pharmacy_address: pharmacyInfo.address || 'N/A'
+        };
+    });
+
+    // 7. Send response
+    res.status(200).json({
+        success: true,
+        count: invoiceWithDetails.length,
+        data: invoiceWithDetails,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+});
 //@desc get invoice done by dist by id
 //@router get/api/user/getinvoiceRDbydistId/:id
 //access public
-const getinvoiceRDbydistId=asyncHandler(async(req,res)=>{
-    const customerId=req.params.id;
-    if(!customerId)
-    {
-        res.status(400)
-        throw new Error("id required")
-        
-    }
-    const invoices=await InvoiceRD.find({customerId:customerId,reportDefault:"true"})
+const getinvoiceRDbydistId = asyncHandler(async (req, res) => {
+   const customerId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
 
-    const invoicewithserialnumbers=invoices.map((invoice,index)=>({
-           serialNo:index+1,
-           ...invoice.toObject()
-    }))
+    if (!customerId) {
+        res.status(400);
+        throw new Error("id required");
+    }
+
+    // 1. Get all invoices with pagination
+    const invoices = await InvoiceRD.find({
+        customerId: customerId,
+        reportDefault: "true",
+        updatebydistBoolean:"false"
+    }).sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+    // 2. Extract unique pharmacy license numbers
+    const uniqueLicenseNumbers = [...new Set(invoices.map(invoice => invoice.pharmadrugliseanceno))];
+
+    // 3. Fetch pharmacy details in bulk
+    const pharmacyDetails = await Register.find({
+        dl_code: { $in: uniqueLicenseNumbers }
+    })
+    .select('pharmacy_name dl_code phone_number address')
+    .lean();
+
+    // 4. Create a map for quick pharmacy lookup
+    const pharmacyMap = pharmacyDetails.reduce((acc, pharmacy) => {
+        acc[pharmacy.dl_code] = pharmacy;
+        return acc;
+    }, {});
+
+    // 5. Get total count of invoices
+    const totalCount = await InvoiceRD.countDocuments({
+        customerId: customerId,
+        reportDefault: "true",
+        updatebydistBoolean:"false"
+    });
+
+    // 6. Combine invoice data with pharmacy details
+    const invoicewithserialnumbers = invoices.map((invoice, index) => {
+        const pharmacyInfo = pharmacyMap[invoice.pharmadrugliseanceno] || {};
+
+        return {
+            serialNo:  skip + index + 1,  // Adjusted serial number with pagination
+            ...invoice,
+            pharmacy_name: pharmacyInfo.pharmacy_name || 'N/A',
+            pharmacy_phone: pharmacyInfo.phone_number || 'N/A',
+            pharmacy_address: pharmacyInfo.address || 'N/A',
+        };
+    });
+
     res.status(200).json({
         success: true,
         count: invoicewithserialnumbers.length,
-        data: invoicewithserialnumbers
+        data: invoicewithserialnumbers,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
     });
-
-})
+});
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/') // Make sure this folder exists
@@ -1474,6 +1678,121 @@ const updateDisputeAdminSeenStatus = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error occurred" });
   }
 });
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections,getPharmaData2}
+// @desc get all liked distributors details to that pharmacy
+// @router /api/user/getPharmaConnections
+// @access public
+const getPharmaConnections = asyncHandler(async (req, res) => {
+    try {
+      // 1. Fetch all Link documents
+      const {pharmaId}=req.query
+      
+      const linkDocs = await Link.find({pharmaId:pharmaId}).select({  distId: 1 });
+      
+      // 2. Extract unique IDs for bulk queries
+      const uniquePharmaIds = [...new Set(linkDocs
+        .map(doc => doc.distId)
+        .filter(id => isValidObjectId(id)))];
+   
+  
+      // 3. Fetch all pharmacy and distributor data in parallel with bulk queries
+      const [pharmacies] = await Promise.all([
+          Register2.find({ _id: { $in: uniquePharmaIds } })
+            .select('_id pharmacy_name dl_code phone_number address expiry_date').lean()
+            .then(docs => Object.fromEntries(
+              docs.map(doc => [
+                doc._id.toString(), // Key
+                {
+                  pharmacy_name: doc.pharmacy_name,
+                  dl_code: doc.dl_code,
+                  phone_number: [doc.phone_number],
+                  address: doc.address,
+                  expiry_date: doc.expiry_date
+                } // Value as an object
+              ])
+            )),
+        ]);
+        
+      console.log("--",pharmacies)
+      const count =await Link.countDocuments({pharmaId:pharmaId})
+  
+      res.json({ Defaults: pharmacies ,count:count});
+  
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+      res.status(500).json({ message: "Server error occurred" });
+    }
+  });
+  //@desc get invoice done by dist by id
+//@router get/api/user/getinvoiceDetailedRDbydistId/:id
+//access public
+const getinvoiceDetailedRDbydistId = asyncHandler(async (req, res) => {
+    const customerId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
+
+    if (!customerId) {
+        res.status(400);
+        throw new Error("id required");
+    }
+
+    // 1. Get all invoices with pagination
+    const invoices = await InvoiceRD.find({
+        customerId: customerId,
+        reportDefault: "true",
+    }).sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+    // 2. Extract unique pharmacy license numbers
+    const uniqueLicenseNumbers = [...new Set(invoices.map(invoice => invoice.pharmadrugliseanceno))];
+
+    // 3. Fetch pharmacy details in bulk
+    const pharmacyDetails = await Register.find({
+        dl_code: { $in: uniqueLicenseNumbers }
+    })
+    .select('pharmacy_name dl_code phone_number address')
+    .lean();
+
+    // 4. Create a map for quick pharmacy lookup
+    const pharmacyMap = pharmacyDetails.reduce((acc, pharmacy) => {
+        acc[pharmacy.dl_code] = pharmacy;
+        return acc;
+    }, {});
+
+    // 5. Get total count of invoices
+    const totalCount = await InvoiceRD.countDocuments({
+        customerId: customerId,
+        reportDefault: "true",
+    });
+
+    // 6. Combine invoice data with pharmacy details
+    const invoicewithserialnumbers = invoices.map((invoice, index) => {
+        const pharmacyInfo = pharmacyMap[invoice.pharmadrugliseanceno] || {};
+
+        return {
+            serialNo:  skip + index + 1,  // Adjusted serial number with pagination
+            ...invoice,
+            pharmacy_name: pharmacyInfo.pharmacy_name || 'N/A',
+            pharmacy_phone: pharmacyInfo.phone_number || 'N/A',
+            pharmacy_address: pharmacyInfo.address || 'N/A',
+        };
+    });
+
+    res.status(200).json({
+        success: true,
+        count: invoicewithserialnumbers.length,
+        data: invoicewithserialnumbers,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+});
+
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections,getPharmaData2,getPharmaConnections,getinvoiceDetailedRDbydistId,updateNotice,getDetailedinvoicesbydistId}
 
 
