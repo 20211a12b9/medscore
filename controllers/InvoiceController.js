@@ -48,7 +48,7 @@ const InvoiceController =asyncHandler(async (req,res)=>{
 
 })
 
-//@desc get invoice data
+//@desc get invoice data(remainder data)
 //@router /api/user/getInvoice
 //access public
 const getInvoiceData=asyncHandler(async (req,res)=>{
@@ -104,7 +104,7 @@ console.log("licenseNo",licenseNo)
         }
     });
 })
-//@desc get invoiceRD data
+//@desc get invoiceRD data(reaport defauult for pharma)
 //@router /api/user/getInvoiceRD/
 //access public
 const getInvoiceRDData=asyncHandler(async (req,res)=>{
@@ -669,7 +669,7 @@ const downloadExcelReport = asyncHandler(async (req, res) => {
     }
 });
 
-//@desc update reportdefault to false
+//@desc update reportdefault to false(used _id)
 //@route PUT /api/user/updateReportDefault
 //@access public
 const updateDefault = asyncHandler(async (req, res) => {
@@ -740,7 +740,7 @@ const updateNotice = asyncHandler(async (req, res) => {
         });
     }
 });
-//@desc update reportdefault to false
+//@desc update reportdefault to false(used _id)
 //@route PUT /api/user/updateReportDefaultReject/:pharmadrugliseanceno/:invoice/:customerId
 //@access public
 const updateDefaultReject = asyncHandler(async (req, res) => {
@@ -991,7 +991,7 @@ const getinvoicesbydistId = asyncHandler(async (req, res) => {
         }
     });
 });
-//@desc get invoice done by dist by id
+//@desc get detailed invoice done by dist by id
 //@router get/api/user/getDetailedinvoicesbydistId/:id
 //access public
 const getDetailedinvoicesbydistId = asyncHandler(async (req, res) => {
@@ -1055,7 +1055,7 @@ const getDetailedinvoicesbydistId = asyncHandler(async (req, res) => {
         }
     });
 });
-//@desc get invoice done by dist by id
+//@desc get invoice done by dist by id (before updated)
 //@router get/api/user/getinvoiceRDbydistId/:id
 //access public
 const getinvoiceRDbydistId = asyncHandler(async (req, res) => {
@@ -1734,7 +1734,7 @@ const getPharmaConnections = asyncHandler(async (req, res) => {
       res.status(500).json({ message: "Server error occurred" });
     }
   });
-  //@desc get invoice done by dist by id
+  //@desc get detailed invoice done by dist by id
 //@router get/api/user/getinvoiceDetailedRDbydistId/:id
 //access public
 const getinvoiceDetailedRDbydistId = asyncHandler(async (req, res) => {
