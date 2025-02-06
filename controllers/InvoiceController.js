@@ -315,7 +315,19 @@ console.log(totalCount)
         totalCount
     });
 })
-
+//@desc get count no of defaults
+//@router /api/user/countDefaults
+//@access public
+const countDefaults=asyncHandler(async(req,res)=>{
+    const  licenseNo  = req.query.licenseNo;
+    
+    const totalCount = await Invoice.countDocuments({ pharmadrugliseanceno: licenseNo });
+console.log(totalCount)
+    res.status(200).json({
+        success: true,
+        totalCount
+    });
+})
 //@desc get count no of notices
 //@router /api/user/countDisputes
 //@access public
