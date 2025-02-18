@@ -83,7 +83,7 @@ app.use(express.json({
 app.use(mongoSanitize());
 
 // Protect against XSS (Cross-Site Scripting) attacks
-// app.use(xss());
+app.use(xss());
 
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
