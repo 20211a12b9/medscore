@@ -14,7 +14,7 @@ const validateToken = asyncHandler(async (req, res, next) => {
 
         try {
             const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-            console.log("Decoded Token:", decoded); // Debugging log
+            console.log("Decoded Token:", decoded); 
 
             req.user = decoded; // ✅ Assign full decoded payload, not just `decoded.user`
            
