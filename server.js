@@ -14,7 +14,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const hpp = require("hpp");
 const session = require("express-session");
-const { logger, securityMonitoring } = require('./middleware/logger');
+// const { logger, securityMonitoring } = require('./middleware/logger');
 
 connectDb();
 
@@ -116,7 +116,7 @@ app.use(errorHandler);
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
-app.use(securityMonitoring);
+// app.use(securityMonitoring);
 const startServer = async () => {
     try {
         if (mongoose.connection.readyState === 1) {
@@ -129,28 +129,28 @@ const startServer = async () => {
             });
         }
 
-        app.listen(PORT, () => {
-            logger.info(`Server running on port ${PORT}`);
-            logger.info({
-                type: 'SERVER_START',
-                port: PORT,
-                environment: process.env.NODE_ENV,
-                security: {
-                    helmet: true,
-                    cors: true,
-                    rateLimit: true,
-                    mongoSanitize: true,
-                    xss: true,
-                    hpp: true
-                }
-            });
-        });
+        // app.listen(PORT, () => {
+        //     logger.info(`Server running on port ${PORT}`);
+        //     logger.info({
+        //         type: 'SERVER_START',
+        //         port: PORT,
+        //         environment: process.env.NODE_ENV,
+        //         security: {
+        //             helmet: true,
+        //             cors: true,
+        //             rateLimit: true,
+        //             mongoSanitize: true,
+        //             xss: true,
+        //             hpp: true
+        //         }
+        //     });
+        // });
     } catch (error) {
-        logger.error({
-            type: 'SERVER_ERROR',
-            error: error.message,
-            stack: error.stack
-        });
+        // logger.error({
+        //     type: 'SERVER_ERROR',
+        //     error: error.message,
+        //     stack: error.stack
+        // });
         console.error('Server startup error:', error);
     }
 };
