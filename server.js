@@ -117,6 +117,43 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 // app.use(securityMonitoring);
+// const startServer = async () => {
+//     try {
+//         if (mongoose.connection.readyState === 1) {
+//             console.log('MongoDB already connected');
+//             await migratePhonenumbers();
+//         } else {
+//             mongoose.connection.once('connected', async () => {
+//                 console.log('MongoDB connected');
+//                 await migratePhonenumbers();
+//             });
+//         }
+
+//         // app.listen(PORT, () => {
+//         //     logger.info(`Server running on port ${PORT}`);
+//         //     logger.info({
+//         //         type: 'SERVER_START',
+//         //         port: PORT,
+//         //         environment: process.env.NODE_ENV,
+//         //         security: {
+//         //             helmet: true,
+//         //             cors: true,
+//         //             rateLimit: true,
+//         //             mongoSanitize: true,
+//         //             xss: true,
+//         //             hpp: true
+//         //         }
+//         //     });
+//         // });
+//     } catch (error) {
+//         // logger.error({
+//         //     type: 'SERVER_ERROR',
+//         //     error: error.message,
+//         //     stack: error.stack
+//         // });
+//         console.error('Server startup error:', error);
+//     }
+// };
 const startServer = async () => {
     try {
         if (mongoose.connection.readyState === 1) {
@@ -129,28 +166,10 @@ const startServer = async () => {
             });
         }
 
-        // app.listen(PORT, () => {
-        //     logger.info(`Server running on port ${PORT}`);
-        //     logger.info({
-        //         type: 'SERVER_START',
-        //         port: PORT,
-        //         environment: process.env.NODE_ENV,
-        //         security: {
-        //             helmet: true,
-        //             cors: true,
-        //             rateLimit: true,
-        //             mongoSanitize: true,
-        //             xss: true,
-        //             hpp: true
-        //         }
-        //     });
-        // });
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
     } catch (error) {
-        // logger.error({
-        //     type: 'SERVER_ERROR',
-        //     error: error.message,
-        //     stack: error.stack
-        // });
         console.error('Server startup error:', error);
     }
 };
