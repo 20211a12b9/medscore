@@ -1156,6 +1156,7 @@ const upload = multer({
 const FileUploadController = asyncHandler(async (req, res) => {
     try {
         // Handle file upload
+        console.log("uploading---")
         upload(req, res, async function (err) {
             if (err) {
                 return res.status(400).json({
@@ -1212,16 +1213,18 @@ const VALID_MIME_TYPES = [
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const headerMappings = {
-    Description: [/^desc/i, /^pha/i, /store/i, /medical store/i, /details/i, /information/i],
-    Total: [/^total/i, /^amount/i, /^out/i, /^bal/i, /balance/i],
-    DLNo1: [/^dl no 1/i, /^dl1/i, /drug license 1/i, /license 1/i],
-    DLNo2: [/^dl no 2/i, /^dl2/i, /drug license 2/i, /license 2/i],
-    DueDate: [/^due/i, /^age$/i, /^payment date/i, /^date due/i],
-    PhoneNumber: [/^phone/i, /^mobile/i, /contact/i, /phone number/i]
+    Description: [/^desc/i, /^pha/i, /store/i, /medical store/i, /details/i, /information/i,/^Cust/i,/^Party/i],
+    Total: [/^total/i, /^amount/i, /^out/i, /^bal/i, /balance/i,/^Bal/i,/Bal1/i],
+    DLNo1: [/^dl no 1/i, /^dl1/i, /drug license 1/i, /license 1/i,/^DL/i,/^Dl/i],
+    DLNo2: [/^dl no 2/i, /^dl2/i, /drug license 2/i, /license 2/i,/^DL/i,/^Dl/i],
+    DueDate: [/^due/i, /^age$/i, /^payment date/i, /^date due/i,/Ag/i],
+    PhoneNumber: [/^phone/i, /^mobile/i, /contact/i, /phone number/i,/^Phone/i]
 };
 
 const uploadOutstandingFile = asyncHandler(async (req, res) => {
     const customerId = req.params.id;
+    console.log("uploading---");
+
     if (!customerId) {
         return res.status(400).json({ message: "Customer ID required" });
     }
@@ -1235,10 +1238,12 @@ const uploadOutstandingFile = asyncHandler(async (req, res) => {
             });
         });
     };
+
     const fs = require('fs');
     try {
         const file = await uploadFile();
-        
+        console.log("uploading2---");
+
         if (!file) {
             return res.status(400).json({ message: 'Please upload an excel file!' });
         }
@@ -1254,12 +1259,16 @@ const uploadOutstandingFile = asyncHandler(async (req, res) => {
             fs.unlinkSync(file.path);
             return res.status(400).json({ message: 'Invalid file type' });
         }
+        console.log("uploading3---");
 
         const workbook = XLSX.readFile(file.path);
         const sheet_name_list = workbook.SheetNames;
         const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+        console.log("uploading222---");
 
         const { validatedData, errors } = validateExcelData(data);
+        console.log("uploading22---", validatedData);
+        console.log("uploading22---", errors);
 
         if (errors.length > 0) {
             fs.unlinkSync(file.path);
@@ -1268,22 +1277,30 @@ const uploadOutstandingFile = asyncHandler(async (req, res) => {
                 errors
             });
         }
+        console.log("uploading23---");
 
         // Save to database using transactions
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
+            // Check if there is already an outstanding record for the customer
             let outstanding = await Outstanding.findOne({ customerId }).session(session);
-            if (!outstanding) {
+            if (outstanding) {
+                // If previous data exists, delete it
+                outstanding.uploadData = []; // Empty the uploadData array
+                await outstanding.save({ session });
+            } else {
+                // If no record exists, create a new one
                 outstanding = new Outstanding({ customerId, uploadData: [] });
             }
 
+            // Add new validated data
             outstanding.uploadData.push(...validatedData);
             await outstanding.save({ session });
-            
+
             await session.commitTransaction();
-            
+
             res.status(200).json({
                 customerId,
                 message: 'Data uploaded successfully',
@@ -1309,6 +1326,7 @@ const uploadOutstandingFile = asyncHandler(async (req, res) => {
     }
 });
 
+
 const getSumByDescription = asyncHandler(async (req, res) => {
     try {
       const { licenseNo } = req.query;
@@ -1326,13 +1344,17 @@ const getSumByDescription = asyncHandler(async (req, res) => {
       const data = await Outstanding.aggregate([
         { $unwind: '$uploadData' },
         {
-          $match: {
-            'uploadData.Description': phname
-          }
+            $match: {
+                $or: [
+                //   { 'uploadData.Description': phname },
+                  { 'uploadData.DLNo1': licenseNo }
+                ]
+              }
+              
         },
         {
           $group: {
-            _id: '$uploadData.Description',
+            _id: '$uploadData.DLNo1',
             totalSum: { $sum: { $toDouble: '$uploadData.Total' } }
           }
         },
