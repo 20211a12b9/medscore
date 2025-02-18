@@ -71,7 +71,8 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 // Apply CORS before other middlewares
-app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 
 // Apply general rate limiting to all routes
 // app.use(apiLimiter);
