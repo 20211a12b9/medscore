@@ -782,4 +782,4 @@ const addPhonenumber = asyncHandler(async(req, res) => {
   }
 });
 
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith,addPhonenumber,refreshToken}
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith,addPhonenumber}
