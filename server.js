@@ -24,22 +24,22 @@ const app = express();
 
 app.use(cookieParser());
 // Rate limiting configuration
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
-    message: 'Too many requests from this IP, please try again after 15 minutes',
-    standardHeaders: true,
-    legacyHeaders: false
-});
+// const apiLimiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 100, // Limit each IP to 100 requests per window
+//     message: 'Too many requests from this IP, please try again after 15 minutes',
+//     standardHeaders: true,
+//     legacyHeaders: false
+// });
 
 // Stricter rate limit for authentication routes
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 login attempts per window
-    message: 'Too many login attempts, please try again after 15 minutes',
-    standardHeaders: true,
-    legacyHeaders: false
-});
+// const authLimiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 5, // Limit each IP to 5 login attempts per window
+//     message: 'Too many login attempts, please try again after 15 minutes',
+//     standardHeaders: true,
+//     legacyHeaders: false
+// });
 
 // CORS configuration
 const corsOptions = {
@@ -74,7 +74,7 @@ app.use(helmet({
 app.use(cors(corsOptions));
 
 // Apply general rate limiting to all routes
-app.use(apiLimiter);
+// app.use(apiLimiter);
 
 app.use(express.json({
     limit: '50mb',
@@ -120,8 +120,8 @@ const PORT = process.env.PORT || 5001;
 app.use(express.static(path.join(__dirname, "build")));
 
 // Apply stricter rate limiting to authentication routes
-app.use("/api/user/login", authLimiter);
-app.use("/api/user/register", authLimiter);
+// app.use("/api/user/login", authLimiter);
+// app.use("/api/user/register", authLimiter);
 
 // Routes
 app.use("/api/user", require("./Router/registerRoutes"));
