@@ -43,18 +43,10 @@ app.use(cookieParser());
 
 // CORS configuration
 const corsOptions = {
-    origin: [
-        'http://localhost:3000', // Development front-end
-        'https://medscore-api.onrender.com', // Rendered front-end
-        'https://medscore.in', // Production front-end
-        'https://www.medscore.in', // Alternative production domain
-        'https://medscore-api.azurewebsites.net' // API endpoint domain
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow necessary HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization', 'mode'], // Added 'mode' here
-    credentials: true, // Allow credentials like cookies or authentication headers
-    exposedHeaders: ["Set-Cookie"], // Expose the Set-Cookie header to the client
-    optionsSuccessStatus: 200 // Ensures successful OPTIONS responses for preflight requests
+    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com', 'https://medscore.in', 'https://www.medscore.in', 'https://medscore-api.azurewebsites.net'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,  // If using authentication headers or cookies
 };
 
 app.use(helmet({
@@ -70,6 +62,8 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+app.use(cors(corsOptions));
+
 // Apply CORS before other middlewares
 app.options('*', cors(corsOptions));
 
