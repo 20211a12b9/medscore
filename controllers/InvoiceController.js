@@ -1204,78 +1204,111 @@ const FileUploadController = asyncHandler(async (req, res) => {
 //@router /api/user/outstanding/:id
 //@access public
 
-const uploadOutstandingFile=asyncHandler(async(req,res)=>{
-    const customerId=req.params.id;
-    if(!customerId)
-        {
-            res.status(400)
-            throw new Error("id required")
-            
+const VALID_MIME_TYPES = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
+];
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const headerMappings = {
+    Description: [/^desc/i, /^pha/i, /store/i, /medical store/i, /details/i, /information/i],
+    Total: [/^total/i, /^amount/i, /^out/i, /^bal/i, /balance/i],
+    DLNo1: [/^dl no 1/i, /^dl1/i, /drug license 1/i, /license 1/i],
+    DLNo2: [/^dl no 2/i, /^dl2/i, /drug license 2/i, /license 2/i],
+    DueDate: [/^due/i, /^age$/i, /^payment date/i, /^date due/i],
+    PhoneNumber: [/^phone/i, /^mobile/i, /contact/i, /phone number/i]
+};
+
+const uploadOutstandingFile = asyncHandler(async (req, res) => {
+    const customerId = req.params.id;
+    if (!customerId) {
+        return res.status(400).json({ message: "Customer ID required" });
+    }
+
+    // Promisify the upload function
+    const uploadFile = () => {
+        return new Promise((resolve, reject) => {
+            upload(req, res, (err) => {
+                if (err) reject(err);
+                else resolve(req.file);
+            });
+        });
+    };
+
+    try {
+        const file = await uploadFile();
+        
+        if (!file) {
+            return res.status(400).json({ message: 'Please upload an excel file!' });
         }
-    try{
-        upload(req,res,async function (err){
-            if (err) {
-                return res.status(400).json({
-                    message: err.message
-                });
-            }
-            if (!req.file) {
-                return res.status(400).json({
-                    message: 'Please upload an excel file!'
-                });
-            }
-           const workbook=XLSX.readFile(req.file.path);
-           const sheet_name_list=workbook.SheetNames;
-           const data=XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]])
-          
-           const fs = require('fs');
-           try {
-            // Check if customer already exists
-            const validatedData = data.map(row => ({
-                Description: row.Description,
-                Total: parseFloat(row.Total),
-                additionalFields: { ...row }
-            }));
-            let outstanding = await Outstanding.findOne({ customerId });
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            fs.unlinkSync(file.path);
+            return res.status(400).json({ message: 'File size exceeds limit' });
+        }
+
+        // Validate MIME type
+        if (!VALID_MIME_TYPES.includes(file.mimetype)) {
+            fs.unlinkSync(file.path);
+            return res.status(400).json({ message: 'Invalid file type' });
+        }
+
+        const workbook = XLSX.readFile(file.path);
+        const sheet_name_list = workbook.SheetNames;
+        const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+
+        const { validatedData, errors } = validateExcelData(data);
+
+        if (errors.length > 0) {
+            fs.unlinkSync(file.path);
+            return res.status(400).json({
+                message: 'Validation errors',
+                errors
+            });
+        }
+
+        // Save to database using transactions
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            let outstanding = await Outstanding.findOne({ customerId }).session(session);
             if (!outstanding) {
                 outstanding = new Outstanding({ customerId, uploadData: [] });
             }
 
-            // Add new data
             outstanding.uploadData.push(...validatedData);
-            await outstanding.save();
+            await outstanding.save({ session });
             
-
-          
-           
-          
-
+            await session.commitTransaction();
+            
             res.status(200).json({
-                customerId: customerId,
+                customerId,
                 message: 'Data uploaded successfully',
                 recordsAdded: validatedData.length,
                 totalRecords: outstanding.uploadData.length
             });
-            fs.unlinkSync(req.file.path);
         } catch (dbError) {
-            // If database operation fails, delete the uploaded file
-            fs.unlinkSync(req.file.path);
+            await session.abortTransaction();
             throw dbError;
+        } finally {
+            session.endSession();
+            fs.unlinkSync(file.path);
         }
-        })
-    }catch(error){
 
+    } catch (error) {
+        if (req.file?.path) {
+            fs.unlinkSync(req.file.path);
+        }
         res.status(500).json({
             message: 'Error uploading file',
             error: error.message
         });
     }
+});
 
-}
-)
-//@desc get uploaded data by description
-//@router /api/user/getUploadedData
-//@access public
 const getSumByDescription = asyncHandler(async (req, res) => {
     try {
       const { licenseNo } = req.query;
@@ -1287,9 +1320,9 @@ const getSumByDescription = asyncHandler(async (req, res) => {
       } else {
         phname = licenseNo;
       }
-      
+
       console.log(phname, "phanme");
-      
+
       const data = await Outstanding.aggregate([
         { $unwind: '$uploadData' },
         {
@@ -1310,17 +1343,50 @@ const getSumByDescription = asyncHandler(async (req, res) => {
           }
         }
       ]);
-      
+
       // If data array is empty, return default object
       const response = data.length > 0 ? data : [{ Description: '', Total: 0 }];
-      
+
       console.log(response);
       res.status(200).json(response);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
 });
-  
+
+// Helper function to validate Excel data
+const validateExcelData = (data) => {
+    const validationErrors = [];
+    const validatedData = data.map((row, index) => {
+        const standardizedRow = {};
+        
+        Object.entries(row).forEach(([key, value]) => {
+            const lowercaseKey = key.toLowerCase().trim();
+            
+            for (const [standardField, possibleNames] of Object.entries(headerMappings)) {
+                if (possibleNames.some(pattern => pattern.test(lowercaseKey))) {
+                    standardizedRow[standardField] = value;
+                    break;
+                }
+            }
+        });
+
+        // Validation logic...
+        if (!standardizedRow.Description) {
+            validationErrors.push(`Row ${index + 1}: Missing Description`);
+        }
+        if (!standardizedRow.Total) {
+            validationErrors.push(`Row ${index + 1}: Missing Total`);
+        }
+
+        return {
+            ...standardizedRow,
+            uploadedAt: new Date()
+        };
+    });
+
+    return { validatedData, errors: validationErrors };
+};
 //@desc get report default info if duspute true or false
 //@router /api/user/checkifdisputed/:id
 //access public

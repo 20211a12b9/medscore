@@ -10,7 +10,7 @@ const MahaData=require('../models/maharastraCentalData')
 const { query } = require("express")
 //@desc Register a user
 //@router /api/register/Pharmacyregister
-//access public
+//access public 
 
 const registerController= asyncHandler(async (req,res)=>{
     const { pharmacy_name, email, phone_number, dl_code, address, password,expiry_date } = req.body;
@@ -124,134 +124,341 @@ const registerController2= asyncHandler(async (req,res)=>{
 //@desc check if user id registred in both 
 //@router /api/user/checkIfLoginedinboth
 //@access public
-const checkIfLoggedinbith=asyncHandler(async(req,res)=>{
-    const {dl_code,password}=req.body;
-    const login1=await Register.findOne({dl_code});
-   const login2=await Register2.findOne({dl_code});
-   if(login1 && login2)
-   {
-     res.status(200).json({status:true})
-   }
-   res.status(200).json({status:false})
-})
-
-
-//@desc Login the user
-//@router /api/user/login
-//@access public
-
-const loginUser = asyncHandler(async (req,res)=>{
-   const {dl_code,password,type}=req.body;
-   if(!dl_code || !password)
-   {
-    res.status(400)
-        return res.json({ message: "All fields are mandatory" });
-   }
-   if(type=="Pharma")
-   {
-    const login1=await Register.findOne({dl_code});
+const checkIfLoggedinbith = asyncHandler(async (req, res) => {
+    const { dl_code, password } = req.body;
     
-    if(login1 && (await bcrypt.compare(password,login1.password)))
-    {
- 
-      const accesstoken=await jwt.sign({
-         login1:{
-             dl_code:login1.dl_code,
-             pharmacy_name:login1.pharmacy_name,
-             email:login1.email,
-             phone_number:login1.phone_number,
-         },
- 
-      },process.env.ACCESS_TOKEN_SECRET,
-      {expiresIn:"15min"}
-     );
-     res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
+    // Find user in both registers
+    const login1 = await Register.findOne({ dl_code });
+    const login2 = await Register2.findOne({ dl_code });
+    
+    // Use a single return to prevent multiple response sends
+    if (login1 && login2) {
+        return res.status(200).json({ status: true });
     }
-   }
-   else if(type=="Dist")
-   {
     
-    const login2=await Register2.findOne({dl_code});
+    // If not found in both registers, send false status
+    return res.status(200).json({ status: false });
+});
+
+
+// //@desc Login the user
+// //@router /api/user/login
+// //@access public
+
+// const loginUser = asyncHandler(async (req,res)=>{
+//    const {dl_code,password,type}=req.body;
+//    if(!dl_code || !password)
+//    {
+//     res.status(400)
+//         return res.json({ message: "All fields are mandatory" });
+//    }
+//    if(type=="Pharma")
+//    {
+//     const login1=await Register.findOne({dl_code});
+    
+//     if(login1 && (await bcrypt.compare(password,login1.password)))
+//     {
+ 
+//       const accesstoken=await jwt.sign({
+//          login1:{
+//              dl_code:login1.dl_code,
+//              pharmacy_name:login1.pharmacy_name,
+//              email:login1.email,
+//              phone_number:login1.phone_number,
+//          },
+ 
+//       },process.env.ACCESS_TOKEN_SECRET,
+//       {expiresIn:"15m"}
+//      );
+//      res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
+//     }
+//    }
+//    else if(type=="Dist")
+//    {
+    
+//     const login2=await Register2.findOne({dl_code});
    
-    if(login2 && (await bcrypt.compare(password,login2.password)))
-        {
+//     if(login2 && (await bcrypt.compare(password,login2.password)))
+//         {
      
-          const accesstoken=await jwt.sign({
-             login2:{
-                 dl_code:login2.dl_code,
-                 pharmacy_name:login2.pharmacy_name,
-                 email:login2.email,
-                 phone_number:login2.phone_number,
-             },
+//           const accesstoken=await jwt.sign({
+//              login2:{
+//                  dl_code:login2.dl_code,
+//                  pharmacy_name:login2.pharmacy_name,
+//                  email:login2.email,
+//                  phone_number:login2.phone_number,
+//              },
      
-          },process.env.ACCESS_TOKEN_SECRET,
-          {expiresIn:"15min"}
-         );
-         res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
-        }
-   }
-   else{
-   const login1=await Register.findOne({dl_code});
-   const login2=await Register2.findOne({dl_code});
-   const login3=await Admin.findOne({dl_code})
-   if(login1 && (await bcrypt.compare(password,login1.password)))
-   {
+//           },process.env.ACCESS_TOKEN_SECRET,
+//           {expiresIn:"15m"}
+//          );
+//          res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
+//         }
+//    }
+//    else{
+//    const login1=await Register.findOne({dl_code});
+//    const login2=await Register2.findOne({dl_code});
+//    const login3=await Admin.findOne({dl_code})
+//    if(login1 && (await bcrypt.compare(password,login1.password)))
+//    {
 
-     const accesstoken=await jwt.sign({
-        login1:{
-            dl_code:login1.dl_code,
-            pharmacy_name:login1.pharmacy_name,
-            email:login1.email,
-            phone_number:login1.phone_number,
-        },
+//      const accesstoken=await jwt.sign({
+//         login1:{
+//             dl_code:login1.dl_code,
+//             pharmacy_name:login1.pharmacy_name,
+//             email:login1.email,
+//             phone_number:login1.phone_number,
+//         },
 
-     },process.env.ACCESS_TOKEN_SECRET,
-     {expiresIn:"15min"}
-    );
-    res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
-   }
+//      },process.env.ACCESS_TOKEN_SECRET,
+//      {expiresIn:"1m"}
+//     );
+//     res.status(200).json({jwttoken:accesstoken,usertype:"Pharma",id:login1._id,pharmacy_name:login1.pharmacy_name,dl_code:login1.dl_code})
+//    }
   
-   else if(login2 && (await bcrypt.compare(password,login2.password)))
-    {
+//    else if(login2 && (await bcrypt.compare(password,login2.password)))
+//     {
  
-      const accesstoken=await jwt.sign({
-         login2:{
-             dl_code:login2.dl_code,
-             pharmacy_name:login2.pharmacy_name,
-             email:login2.email,
-             phone_number:login2.phone_number,
-         },
+//       const accesstoken=await jwt.sign({
+//          login2:{
+//              dl_code:login2.dl_code,
+//              pharmacy_name:login2.pharmacy_name,
+//              email:login2.email,
+//              phone_number:login2.phone_number,
+//          },
  
-      },process.env.ACCESS_TOKEN_SECRET,
-      {expiresIn:"15min"}
-     );
-     res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
-    }
-    else if(login3 && (await bcrypt.compare(password,login3.password)))
-        {
+//       },process.env.ACCESS_TOKEN_SECRET,
+//       {expiresIn:"15m"}
+//      );
+//      res.status(200).json({jwttoken:accesstoken,usertype:"Dist",id:login2._id,pharmacy_name:login2.pharmacy_name,dl_code:login2.dl_code})
+//     }
+//     else if(login3 && (await bcrypt.compare(password,login3.password)))
+//         {
      
-          const accesstoken=await jwt.sign({
-             login3:{
-                 dl_code:login3.dl_code
+//           const accesstoken=await jwt.sign({
+//              login3:{
+//                  dl_code:login3.dl_code
                  
-             },
+//              },
      
-          },process.env.ACCESS_TOKEN_SECRET,
-          {expiresIn:"15min"}
-         );
-         res.status(200).json({jwttoken:accesstoken,usertype:"Admin",id:login3._id})
-        } 
-        else {
-            res.status(401);
-            return res.json({ message: "Invalid credentials" });
-          }
-        }
+//           },process.env.ACCESS_TOKEN_SECRET,
+//           {expiresIn:"15m"}
+//          );
+//          res.status(200).json({jwttoken:accesstoken,usertype:"Admin",id:login3._id})
+//         } 
+//         else {
+//             res.status(401);
+//             return res.json({ message: "Invalid credentials" });
+//           }
+//         }
         
        
-})
+// })
+const loginUser = asyncHandler(async (req, res) => {
+    const { dl_code, password, type } = req.body;
+    
+    if (!dl_code || !password) {
+      res.status(400);
+      return res.json({ message: "All fields are mandatory" });
+    }
+  
+    // Helper function to generate tokens
+    const generateTokens = async (user, userType) => {
+      const accessToken = jwt.sign(
+        {
+          user: {
+            dl_code: user.dl_code,
+            pharmacy_name: user.pharmacy_name,
+            email: user.email,
+            phone_number: user.phone_number,
+            type: userType
+          },
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+      );
+  
+      const refreshToken = jwt.sign(
+        {
+          dl_code: user.dl_code,
+          type: userType
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
+  
+      return { accessToken, refreshToken };
+    };
+  
+    if (type == "Pharma") {
+      const login1 = await Register.findOne({ dl_code });
+  
+      if (login1 && (await bcrypt.compare(password, login1.password))) {
+        const { accessToken, refreshToken } = await generateTokens(login1, "Pharma");
+  
+        // Set refresh token in HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+  
+        return res.status(200).json({
+          jwttoken: accessToken,
+          usertype: "Pharma",
+          id: login1._id,
+          pharmacy_name: login1.pharmacy_name,
+          dl_code: login1.dl_code
+        });
+      }
+    } else if (type == "Dist") {
+      const login2 = await Register2.findOne({ dl_code });
+  
+      if (login2 && (await bcrypt.compare(password, login2.password))) {
+        const { accessToken, refreshToken } = await generateTokens(login2, "Dist");
+  
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+  
+        return res.status(200).json({
+          jwttoken: accessToken,
+          usertype: "Dist",
+          id: login2._id,
+          pharmacy_name: login2.pharmacy_name,
+          dl_code: login2.dl_code
+        });
+      }
+    } else {
+      const login1 = await Register.findOne({ dl_code });
+      const login2 = await Register2.findOne({ dl_code });
+      const login3 = await Admin.findOne({ dl_code });
+  
+      if (login1 && (await bcrypt.compare(password, login1.password))) {
+        const { accessToken, refreshToken } = await generateTokens(login1, "Pharma");
+  
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+  
+        return res.status(200).json({
+          jwttoken: accessToken,
+          usertype: "Pharma",
+          id: login1._id,
+          pharmacy_name: login1.pharmacy_name,
+          dl_code: login1.dl_code
+        });
+      } else if (login2 && (await bcrypt.compare(password, login2.password))) {
+        const { accessToken, refreshToken } = await generateTokens(login2, "Dist");
+  
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+  
+        return res.status(200).json({
+          jwttoken: accessToken,
+          usertype: "Dist",
+          id: login2._id,
+          pharmacy_name: login2.pharmacy_name,
+          dl_code: login2.dl_code
+        });
+      } else if (login3 && (await bcrypt.compare(password, login3.password))) {
+        const refreshToken = jwt.sign(
+          { dl_code: login3.dl_code, type: "Admin" },
+          process.env.REFRESH_TOKEN_SECRET,
+          { expiresIn: "7d" }
+        );
+  
+        const accessToken = jwt.sign(
+          { login3: { dl_code: login3.dl_code } },
+          process.env.ACCESS_TOKEN_SECRET,
+          { expiresIn: "15m" }
+        );
+  
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+  
+        return res.status(200).json({
+          jwttoken: accessToken,
+          usertype: "Admin",
+          id: login3._id
+        });
+      } else {
+        res.status(401);
+        return res.json({ message: "Invalid credentials" });
+      }
+    }
+  });
+  
+  // Add this new refresh token endpoint
+  const refreshToken = asyncHandler(async (req, res) => {
+    const token = req.cookies.refreshToken;
+    console.log('Refersh token',token)
+    if (!token) {
+      return res.status(401).json({ message: "Refresh Token Missing" });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+      let user;
+  
+      // Find user based on type
+      switch (decoded.type) {
+        case "Pharma":
+          user = await Register.findOne({ dl_code: decoded.dl_code });
+          break;
+        case "Dist":
+          user = await Register2.findOne({ dl_code: decoded.dl_code });
+          break;
+        case "Admin":
+          user = await Admin.findOne({ dl_code: decoded.dl_code });
+          break;
+        default:
+          return res.status(401).json({ message: "Invalid user type" });
+      }
+  
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      // Generate new access token
+      const accessToken = jwt.sign(
+        {
+          user: {
+            dl_code: user.dl_code,
+            pharmacy_name: user.pharmacy_name,
+            email: user.email,
+            phone_number: user.phone_number,
+            type: decoded.type
+          },
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+      );
+  
+      return res.status(200).json({ jwttoken: accessToken });
+  
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+  });
 //@desc get all distdata by pharam id
 //@router /api/user/getdistdatabyphid/:id
-//@access public
+//@access private
 
 const getDistData=asyncHandler(async(req,res)=>{
     const pharmaId=req.params.id;
@@ -264,7 +471,7 @@ const getDistData=asyncHandler(async(req,res)=>{
 
 // register for admin
 //@router /api/user/createAdmin
-//access public
+//access private
 
 const adminController=asyncHandler(async(req,res)=>{
     const {dl_code,password}=req.body;
@@ -288,7 +495,7 @@ const adminController=asyncHandler(async(req,res)=>{
 
 //desc get details about distributor from Registor2 model by _id
 // /api/user/getDistData/:id
-//access public
+//access private
 const getDistDataController = asyncHandler(async(req, res) => {
     const customerId = req.params.id;  // Changed from destructuring
     if(!customerId) {
@@ -310,7 +517,7 @@ const getDistDataController = asyncHandler(async(req, res) => {
 });
 //@desc get Pharma data
 //@router /api/user/getPharmaCentalData/
-//access public
+//access private
 const getPharmaCentalData = asyncHandler(async (req, res) => {
     const licenseNo = req.query.licenseNo;
     // console.log("licenseNo", licenseNo)
@@ -350,7 +557,7 @@ const getPharmaCentalData = asyncHandler(async (req, res) => {
 });
 //@desc get Pharma data
 //@router /api/user/getMHCentalData/
-//access public
+//access private
 const getMHCentalData = asyncHandler(async (req, res) => {
     const licenseNo = req.query.licenseNo;
     // console.log("licenseNo", licenseNo)
@@ -396,7 +603,7 @@ const getMHCentalData = asyncHandler(async (req, res) => {
 });
 //@desc get all dist data
 //@router /api/user/getDistributorsData
-//@access public
+//@access private
 const getDistributorsData = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 100;
@@ -465,7 +672,7 @@ const getDistributorsData = asyncHandler(async (req, res) => {
   
 //@desc get all pharma data
 //@router /api/user/getPharmacyData
-//@access public
+//@access private
 const getPharmacyData=asyncHandler(async(req,res)=>{
     const page=parseInt(req.query.page)||1
     const limit=parseInt(req.query.limit)||100
@@ -519,7 +726,7 @@ const getPharmacyData=asyncHandler(async(req,res)=>{
 
 // @desc add phone number in pharma
 // @router /api/user/addphonenumber/:id
-// @access public
+// @access private
 
 const addPhonenumber = asyncHandler(async(req, res) => {
   try {
@@ -575,4 +782,4 @@ const addPhonenumber = asyncHandler(async(req, res) => {
   }
 });
 
-module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith,addPhonenumber}
+module.exports={registerController,registerController2,loginUser,getDistData,adminController,getDistDataController,getPharmaCentalData,getDistributorsData,getPharmacyData,getMHCentalData,checkIfLoggedinbith,addPhonenumber,refreshToken}

@@ -10,7 +10,8 @@ const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
 //@desc get count of distribuors and customers
-//@router /api/user/getcountofdistributorspharma
+//@router /api/user/getcountofdistributorspharma\
+//@access public
 const getcountofAdminneedDetails=asyncHandler(async(req,res)=>{
     const distributors=await Register2.countDocuments({})
     const pharamacustomers=await Register.countDocuments({})
