@@ -14,6 +14,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const hpp = require("hpp");
 const session = require("express-session");
+const { createProxyMiddleware } = require('http-proxy-middleware');
 // const { logger, securityMonitoring } = require('./middleware/logger');
 
 connectDb();
@@ -42,13 +43,20 @@ const authLimiter = rateLimit({
 
 // CORS configuration
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://medscore-api.onrender.com', 'https://medscore.in','https://www.medscore.in','https://medscore-api.azurewebsites.net'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    exposedHeaders: ["Set-Cookie"],
-    optionsSuccessStatus: 200
+    origin: [
+        'http://localhost:3000', // Development front-end
+        'https://medscore-api.onrender.com', // Rendered front-end
+        'https://medscore.in', // Production front-end
+        'https://www.medscore.in', // Alternative production domain
+        'https://medscore-api.azurewebsites.net' // API endpoint domain
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow necessary HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization', 'mode'], // Added 'mode' here
+    credentials: true, // Allow credentials like cookies or authentication headers
+    exposedHeaders: ["Set-Cookie"], // Expose the Set-Cookie header to the client
+    optionsSuccessStatus: 200 // Ensures successful OPTIONS responses for preflight requests
 };
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -56,7 +64,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", ...corsOptions.origin]
+            connectSrc: ["'self'", ...corsOptions.origin, "https://medscore-api.azurewebsites.net"]
         }
     },
     crossOriginEmbedderPolicy: false,
@@ -98,6 +106,15 @@ app.use(session({
 
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 
+// Add proxy middleware for recaptcha endpoint
+app.use('/api/proxy/recaptcha', createProxyMiddleware({
+  target: 'https://medscore-api.azurewebsites.net',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/proxy/recaptcha': '/api/user/recaptcha'
+  }
+}));
+
 const PORT = process.env.PORT || 5001;
 
 app.use(express.static(path.join(__dirname, "build")));
@@ -116,44 +133,7 @@ app.use(errorHandler);
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
-// app.use(securityMonitoring);
-// const startServer = async () => {
-//     try {
-//         if (mongoose.connection.readyState === 1) {
-//             console.log('MongoDB already connected');
-//             await migratePhonenumbers();
-//         } else {
-//             mongoose.connection.once('connected', async () => {
-//                 console.log('MongoDB connected');
-//                 await migratePhonenumbers();
-//             });
-//         }
 
-//         // app.listen(PORT, () => {
-//         //     logger.info(`Server running on port ${PORT}`);
-//         //     logger.info({
-//         //         type: 'SERVER_START',
-//         //         port: PORT,
-//         //         environment: process.env.NODE_ENV,
-//         //         security: {
-//         //             helmet: true,
-//         //             cors: true,
-//         //             rateLimit: true,
-//         //             mongoSanitize: true,
-//         //             xss: true,
-//         //             hpp: true
-//         //         }
-//         //     });
-//         // });
-//     } catch (error) {
-//         // logger.error({
-//         //     type: 'SERVER_ERROR',
-//         //     error: error.message,
-//         //     stack: error.stack
-//         // });
-//         console.error('Server startup error:', error);
-//     }
-// };
 const startServer = async () => {
     try {
         if (mongoose.connection.readyState === 1) {
