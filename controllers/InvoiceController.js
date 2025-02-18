@@ -1235,7 +1235,7 @@ const uploadOutstandingFile = asyncHandler(async (req, res) => {
             });
         });
     };
-
+    const fs = require('fs');
     try {
         const file = await uploadFile();
         
