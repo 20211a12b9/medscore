@@ -9,6 +9,7 @@ const { getcountofAdminneedDetails, getAdminLikedData } = require("../controller
 const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin } = require('../controllers/adminDashboard'); 
 const validateToken = require("../middleware/validateTokeHandler");
 const recaptcha = require("../controllers/recaptcha");
+const { postjobOpenings, getJobOpenings, deleteJobOpenings } = require("../controllers/jobOpeningsController");
 const router=express.Router();
 
 
@@ -78,4 +79,7 @@ router.post('/addPhonenumber/:id',addPhonenumber)
 router.get('/getPharmaConnections',getPharmaConnections)
 router.get('/getinvoiceDetailedRDbydistId/:id',getinvoiceDetailedRDbydistId)
 router.post('/recaptcha',recaptcha)
+router.post('/postjobOpenings',postjobOpenings)
+router.get('/getJobOpenings',getJobOpenings)
+router.delete('/deleteJobOpenings/:id',deleteJobOpenings)
 module.exports=router;
