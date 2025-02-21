@@ -541,7 +541,7 @@ const getPharmaCentalData = asyncHandler(async (req, res) => {
         LicenceNumber: 1,
         Address: 1,
         ExpDate: 1
-    }).limit(5);
+    }).limit(10);
 
 
     if (!pharmadata || pharmadata.length === 0) {
@@ -587,7 +587,7 @@ const getMHCentalData = asyncHandler(async (req, res) => {
         LicenceNumber: 1,
         Address: 1,
         ExpiryDate: 1
-    }).limit(5);
+    }).limit(10);
 
 
     if (!pharmadata || pharmadata.length === 0) {

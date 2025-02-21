@@ -10,6 +10,7 @@ const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesCl
 const validateToken = require("../middleware/validateTokeHandler");
 const recaptcha = require("../controllers/recaptcha");
 const { postjobOpenings, getJobOpenings, deleteJobOpenings } = require("../controllers/jobOpeningsController");
+const { chatWithBot, postmessage, getHistory, initChat } = require("../controllers/chatbotController");
 const router=express.Router();
 
 
@@ -82,4 +83,8 @@ router.post('/recaptcha',recaptcha)
 router.post('/postjobOpenings',postjobOpenings)
 router.get('/getJobOpenings',getJobOpenings)
 router.delete('/deleteJobOpenings/:id',deleteJobOpenings)
+
+router.post('/message',postmessage)
+router.get('/history/:sessionId',getHistory)
+router.post('/init',initChat)
 module.exports=router;
