@@ -13,12 +13,10 @@ const outstandingReport = asyncHandler(async (req, res) => {
         { $project: { _id: 0, data: "$uploadData" } }
     ]);
 
-    if (!result || result.length === 0) {
-        return res.status(404).json({ message: "No data found" });
-    }
-    
-    // Make sure we're sending the response in the expected format
-    res.json({ data: result[0].data });
+    console.log("Aggregation result:", result);
+
+    // Ensure valid JSON response
+    res.json({ data: result.length > 0 ? result[0].data : [] });
 });
 
 module.exports = { outstandingReport };
