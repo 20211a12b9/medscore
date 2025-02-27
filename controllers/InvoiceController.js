@@ -163,6 +163,65 @@ console.log("licenseNo",licenseNo)
         }
     });
 })
+//@desc get invoiceRD data(reaport defauult for pharma)
+//@router /api/user/getInvoiceRDforIndividual/
+//access public
+const getInvoiceRDforIndividual=asyncHandler(async (req,res)=>{
+    const  licenseNo  = req.query.licenseNo;
+    const page=parseInt(req.query.page)||1
+    const limit=parseInt(req.query.limit)||15
+    const skip=(page-1)*limit;
+console.log("licenseNo",licenseNo)
+    // Validate license number
+    if (!licenseNo) {
+        res.status(400);
+        throw new Error('Pharmacy drug license number is required');
+    }
+
+    // Find all invoices matching the license number
+    const invoiceData = await InvoiceRD.find({ pharmadrugliseanceno: licenseNo,reportDefault:true })
+    .select({
+        pharmadrugliseanceno:1,
+         invoice: 1,
+         invoiceData:1,
+         dueDate:1,
+         delayDays:1,
+         invoiceAmount:1,
+         invoiceDate:1,
+         customerId:1,
+         reason:1,
+         dispute:1,
+         updatebydist:1,
+         reasonforDispute:1,
+         updatebydistBoolean:1,
+         createdAt:1,
+         accept:1,
+         reject:1
+
+  
+    }).lean()       
+
+    if (!invoiceData || invoiceData.length === 0) {
+        res.status(404);
+        throw new Error('No invoices found for this license number');
+    }
+   const totalCount=await InvoiceRD.countDocuments({ pharmadrugliseanceno: licenseNo,reportDefault:true })
+    const serialData=invoiceData.map((invoice,index)=>({
+        serialNo:skip+index+1,
+        ...invoice
+    }))
+    res.status(200).json({
+        success: true,
+        count: serialData.length,
+        data: serialData,
+        pagination: {
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            perPage: limit
+        }
+    });
+})
 //@desc get invoiceRD data
 //@router /api/user/getInvoiceRDforDistUpdate
 //access public
@@ -1213,11 +1272,11 @@ const VALID_MIME_TYPES = [
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const headerMappings = {
-    Description: [/^desc/i, /^pha/i, /store/i, /medical store/i, /details/i, /information/i,/^Cust/i,/^Party/i],
-    Total: [/^total/i, /^amount/i, /^out/i, /^bal/i, /balance/i,/^Bal/i,/Bal1/i],
-    DLNo1: [/^dl no 1/i, /^dl1/i, /drug license 1/i, /license 1/i,/^DL/i,/^Dl/i],
+    Description: [/^desc/i, /^pha/i, /store/i, /medical store/i, /details/i, /information/i,/^Cust/i,/^Party/i,/^CustName/i],
+    Total: [/^total/i, /^amount/i, /^out/i, /^bal/i, /^balance/i,/^Bal/i,/^Bal1/i],
+    DLNo1: [/^dl no 1/i, /^dl1/i, /drug license 1/i, /license 1/i,/^DL/i,/^Dl/i,/^Dlno1/i],
     DLNo2: [/^dl no 2/i, /^dl2/i, /drug license 2/i, /license 2/i,/^DL/i,/^Dl/i],
-    DueDate: [/^due/i, /^age$/i, /^payment date/i, /^date due/i,/Ag/i],
+    DueDate: [/^due/i, /^age$/i, /^payment date/i, /^date due/i,/^Ag/i,/^Age/i],
     PhoneNumber: [/^phone/i, /^mobile/i, /contact/i, /phone number/i,/^Phone/i]
 };
 
@@ -1893,6 +1952,6 @@ const getinvoiceDetailedRDbydistId = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections,getPharmaData2,getPharmaConnections,getinvoiceDetailedRDbydistId,updateNotice,getDetailedinvoicesbydistId}
+module.exports={InvoiceController,getInvoiceData,linkpharmaController,getPharmaData,InvoiceReportDefaultController,getInvoiceRDData,getPData,downloadExcelReport,countNotices,checkIfLinked,getInvoiceRDDataforDist,updateDefault,getInvoiceRDDataforDistUpdate,disputebyPharma,adminupdate,updateReportDefaultStatus,getinvoicesbydistId,getinvoiceRDbydistId,FileUploadController,uploadOutstandingFile,getSumByDescription,checkifdisputedtrue,sampletogetData,getDipsutedData,getDipsutedDatabyId,updateDefaultReject,updateNoticeSeenStatus,countDisputes,updateDisputeSeenStatus,updateDisputeAdminSeenStatus,getDistributorConnections,getPharmaData2,getPharmaConnections,getinvoiceDetailedRDbydistId,updateNotice,getDetailedinvoicesbydistId,getInvoiceRDforIndividual}
 
 

@@ -19,7 +19,7 @@ const outstandingModel = mongoose.Schema({
             },
             DLNo1: String,
             DLNo2: String,
-            DueDate: Date,
+            DueDate: String,
             PhoneNumber: String,
             uploadedAt: {
                 type: Date,

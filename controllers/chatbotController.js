@@ -34,8 +34,8 @@ const responses = {
     te: [
       "1. మెడ్‌స్కోర్ అంటే ఏమిటి?",
       "2. MedScore ఎలా పని చేస్తుంది? దాని ప్రవాహాన్ని వివరించండి.",
-      "3. రిటైలర్ ఫార్మసీ క్రెడిట్ స్కోర్‌ను ఎలా తనిఖీ చేస్తారు?",
-      "4. రిటైలర్ నేరుగా ఫార్మసీకి నోటీసు పంపగలరా?",
+      "3. డిస్ట్రిబ్యూటర్ ఫార్మసీ క్రెడిట్ స్కోర్‌ను ఎలా తనిఖీ చేస్తారు?",
+      "4. డిస్ట్రిబ్యూటర్ నేరుగా ఫార్మసీకి నోటీసు పంపగలరా?",
       "5. ఫార్మసీ క్రెడిట్ స్కోర్‌ను ప్రభావితం చేసే అంశాలు ఏమిటి?",
       "6. రిటైలర్ బకాయి చెల్లింపులను అప్‌లోడ్ చేసినప్పుడు ఏమి జరుగుతుంది?",
       "7. మెడ్‌స్కోర్(MedScore) ఏయే ప్రాంతాల్లో ఉపయోగించబడుతుంది?",
@@ -62,7 +62,7 @@ MedScore ensures transparent, data-driven credit risk management, helping distri
       "5": "Outstanding payments, defaults, and delay days influence the credit score.",
       "6": "The system updates the pharmacy's credit score based on payment delays.",
       "7": "MedScore is used in Kamareddy, Delhi, Rajahmundry, and Aurangabad.",
-      "8": "You can send queries to this email: medscore24@gmail.com or send a WhatsApp message to this number: +91 9063570310."
+      "8": "You can send queries to this email: medscore24@gmail.com or send a WhatsApp message to this number. +91 9063570310."
     },
     hi: {
       "1": "मेडस्कोर फार्मा और हेल्थकेयर वितरण के लिए एक क्रेडिट जोखिम आकलन मंच है।",
@@ -125,8 +125,8 @@ function generateBotResponse(userMessage, language = 'en') {
     };
   }
 
-  // Handle numbered questions (1-6)
-  if (/^[1-6]$/.test(userMessage)) {
+  // Handle numbered questions (1-8)
+  if (/^[1-8]$/.test(userMessage)) {
     return {
       text: responses.answers[language][userMessage],
       language

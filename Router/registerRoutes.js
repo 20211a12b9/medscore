@@ -1,6 +1,6 @@
 const express=require("express");
 const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData, getMHCentalData, checkIfLoggedinbith, addPhonenumber, refreshToken } = require("../controllers/RegisterController");
-const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus,getDistributorConnections, getPharmaData2, getPharmaConnections, getinvoiceDetailedRDbydistId, updateNotice, getDetailedinvoicesbydistId } = require("../controllers/InvoiceController");
+const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus,getDistributorConnections, getPharmaData2, getPharmaConnections, getinvoiceDetailedRDbydistId, updateNotice, getDetailedinvoicesbydistId, getInvoiceRDforIndividual } = require("../controllers/InvoiceController");
 const { sendSms } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
@@ -11,6 +11,7 @@ const validateToken = require("../middleware/validateTokeHandler");
 const recaptcha = require("../controllers/recaptcha");
 const { postjobOpenings, getJobOpenings, deleteJobOpenings } = require("../controllers/jobOpeningsController");
 const { chatWithBot, postmessage, getHistory, initChat } = require("../controllers/chatbotController");
+const { outstandingReport } = require("../controllers/oustandingAnalysis");
 const router=express.Router();
 
 
@@ -24,6 +25,7 @@ router.get("/getInvoice",getInvoiceData)
 router.get("/getpharmaData",getPharmaData)
 router.get("/getPharmaData2",getPharmaData2)
 router.get("/getInvoiceRD/",getInvoiceRDData)
+router.get("/getInvoiceRDforIndividual",getInvoiceRDforIndividual)
 router.get("/getInvoiceRDforDistUpdate",getInvoiceRDDataforDistUpdate)
 router.get("/getPharamaDatainPharma/:id",getPData)
 router.post("/login",loginUser)
@@ -83,6 +85,7 @@ router.post('/recaptcha',recaptcha)
 router.post('/postjobOpenings',postjobOpenings)
 router.get('/getJobOpenings',getJobOpenings)
 router.delete('/deleteJobOpenings/:id',deleteJobOpenings)
+router.get('/outstandingReport',outstandingReport)
 
 router.post('/message',postmessage)
 router.get('/history/:sessionId',getHistory)
