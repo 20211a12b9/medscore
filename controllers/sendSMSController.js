@@ -75,6 +75,29 @@ cron.schedule('0 * * * *', async () => {
   }
 });
 
+const getcoustdatafromlink = asyncHandler(async (req, res) => {
+  const { customerId } = req.query;
+  console.log("customerId:", customerId);
+  
+  if (!customerId) {
+    return res.status(400).json({ success: false, message: "customerId is required" });
+  }
+  const pharmacy = await Register.findOne({dl_code:customerId}).select("pharmacy_name");;
+  
 
+  if (!pharmacy) {
+    return res.status(404).json({ success: false, message: "Pharmacy not found" });
+  }
+  
+  const links = await Link.find({ pharmaId: pharmacy._id });
+      console.log("links",links)
+      if (!links) {
+        return res.status(404).json({ success: false, message: "links not found" });
+      }
+      const distributorIds = links.map(link => link.distId);
+  
+      const distributors = await Register2.find({ _id: { $in: distributorIds } });
+  res.json({ success: true, data: distributors });
+});
 
-module.exports = { sendSms };
+module.exports = { sendSms,getcoustdatafromlink };
