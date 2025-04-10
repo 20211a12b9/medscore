@@ -73,7 +73,10 @@ const invoiceReportDefaultSchema=mongoose.Schema({
         type:Boolean,
         default: false
     },
-
+    notifiedToDistributors:{
+        type:Boolean,
+        default:false
+    }
 
 },
 {

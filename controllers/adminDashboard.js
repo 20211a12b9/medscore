@@ -6,6 +6,8 @@ const DistCentaldata=require("../models/distCentralModel")
 const InvoiceRD=require("../models/invoiceReportDefaultModel")
 const Invoice=require("../models/invoiceModel");
 const MahaData=require("../models/maharastraCentalData")
+const Oustatnding=require("../models/outstanding");
+
 const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
@@ -314,5 +316,83 @@ const getDispytedBydistforAdmin = asyncHandler(async (req, res) => {
       res.status(500).json({ message: "Server error occurred" });
     }
   });
-module.exports={getcountofAdminneedDetails,getAdminLikedData,getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin}
+
+  //@desc get oustanding last updated data
+//@routes /api/user/getOutstandingUpdateddetails
+//@access public
+const getOutstandingUpdateddetails = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 15;
+  const skip = (page - 1) * limit;
+  
+  // Get filter parameters
+  const { name, dlCode, area } = req.query;
+  
+  // First, get all outstanding records IDs with pagination
+  const outstanding = await Oustatnding.find()
+    .sort({ updatedAt: -1 }) // Sort by last updated (newest first)
+    .skip(skip)
+    .limit(limit);
+  
+  // Extract all customer IDs
+  const customerIds = outstanding.map(out => out.customerId);
+  
+  // Build query for Register2 based on filters
+  let registerQuery = { _id: { $in: customerIds } };
+  
+  if (name) {
+    registerQuery.pharmacy_name = { $regex: name, $options: 'i' };
+  }
+  
+  if (dlCode) {
+    registerQuery.dl_code = { $regex: dlCode, $options: 'i' };
+  }
+  
+  if (area) {
+    registerQuery.address = { $regex: area, $options: 'i' };
+  }
+  
+  // Get all matching customer data in one query
+  const customers = await Register2.find(registerQuery).select({
+    pharmacy_name: 1,
+    dl_code: 1,
+    address: 1
+  });
+  
+  // Create a map for quick lookup
+  const customerMap = {};
+  customers.forEach(customer => {
+    customerMap[customer._id.toString()] = customer;
+  });
+  
+  // Build the result array
+  const result = [];
+  for (let out of outstanding) {
+    const customerId = out.customerId.toString();
+    if (customerMap[customerId]) {
+      result.push({
+        dl_code: customerMap[customerId].dl_code,
+        pharmacy_name: customerMap[customerId].pharmacy_name,
+        address: customerMap[customerId].address,
+        last_updated: out.updatedAt
+      });
+    }
+  }
+  
+  // Get total count for pagination
+  const totalCount = await Oustatnding.countDocuments();
+  
+  res.json({ 
+    success: true, 
+    data: result,
+    pagination: {
+      total: totalCount,
+      page,
+      limit,
+      pages: Math.ceil(totalCount / limit)
+    }
+  });
+});
+  
+module.exports={getcountofAdminneedDetails,getAdminLikedData,getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin,getOutstandingUpdateddetails}
 

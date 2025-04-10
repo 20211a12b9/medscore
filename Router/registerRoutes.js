@@ -1,11 +1,11 @@
 const express=require("express");
 const { registerController, registerController2, loginUser, getDistData, adminController, getDistDataController, getPharmaCentalData, getDistributorsData, getPharmacyData, getMHCentalData, checkIfLoggedinbith, addPhonenumber, refreshToken } = require("../controllers/RegisterController");
 const { InvoiceController, getInvoiceData, getPharmaData, linkpharmaController, InvoiceReportDefaultController, getInvoiceRDData, getPData, downloadExcelReport, countNotices, checkIfLinked, getInvoiceRDDataforDist, updateDefault, getInvoiceRDDataforDistUpdate, disputebyPharma, checkdispute, adminupdate, getinvoicesbydistId, getinvoiceRDbydistId, FileUploadController, uploadOutstandingFile, getSumByDescription, checkifdisputedtrue, sampletogetData, getDipsutedData, getDipsutedDatabyId, updateDefaultReject, updateNoticeSeenStatus, countDisputes, updateDisputeSeenStatus, updateDisputeAdminSeenStatus,getDistributorConnections, getPharmaData2, getPharmaConnections, getinvoiceDetailedRDbydistId, updateNotice, getDetailedinvoicesbydistId, getInvoiceRDforIndividual } = require("../controllers/InvoiceController");
-const { sendSms } = require("../controllers/sendSMSController");
+const { sendSms, getcoustdatafromlink } = require("../controllers/sendSMSController");
 const { ResetPassword, confirmResetPassword } = require("../controllers/ResetPasswordController");
 const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsController");
 const { uploadcentalData, getCentaldata, uploadMaharastracentalData, getMaharastraCentaldata } = require("../controllers/distCentalController");
-const { getcountofAdminneedDetails, getAdminLikedData } = require("../controllers/adminDashboard");
+const { getcountofAdminneedDetails, getAdminLikedData, getOutstandingUpdateddetails } = require("../controllers/adminDashboard");
 const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin } = require('../controllers/adminDashboard'); 
 const validateToken = require("../middleware/validateTokeHandler");
 const recaptcha = require("../controllers/recaptcha");
@@ -90,4 +90,7 @@ router.get('/outstandingReport',outstandingReport)
 router.post('/message',postmessage)
 router.get('/history/:sessionId',getHistory)
 router.post('/init',initChat)
+router.get('/getOutstandingUpdateddetails',getOutstandingUpdateddetails)
+
+
 module.exports=router;
