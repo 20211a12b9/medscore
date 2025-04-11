@@ -4,7 +4,8 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!dl_code || !password) {
     return res.status(400).json({ message: "All fields are mandatory" });
   }
-
+  const ACCESS_TOKEN_SECRET = 'venky123';
+  const REFRESH_TOKEN_SECRET = 'medscore24';
   let user = null;
   let usertype = "";
 
@@ -50,8 +51,8 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
   // Generate tokens
-  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+  const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+  const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 
   // Send refresh token as cookie
   res.cookie("refreshToken", refreshToken, {

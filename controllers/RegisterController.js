@@ -149,7 +149,8 @@ const checkIfLoggedinbith = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { dl_code, password, type } = req.body;
-
+  const ACCESS_TOKEN_SECRET = 'venky123';
+const REFRESH_TOKEN_SECRET = 'medscore24';
   if (!dl_code || !password) {
     return res.status(400).json({ message: "All fields are mandatory" });
   }
@@ -199,8 +200,8 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
   // Generate tokens
-  const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+  const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+  const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 
   // Send refresh token as cookie
   res.cookie("refreshToken", refreshToken, {
