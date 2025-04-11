@@ -7,11 +7,14 @@ const { postBlogs, getBlogs, getBlogsById } = require("../controllers/blogsContr
 const { uploadcentalData, getCentaldata, uploadMaharastracentalData, getMaharastraCentaldata } = require("../controllers/distCentalController");
 const { getcountofAdminneedDetails, getAdminLikedData, getOutstandingUpdateddetails } = require("../controllers/adminDashboard");
 const { getAdminDefaults,getAdminNotices,getDispytedBydistforAdmin,getDispytesClaimedforAdmin } = require('../controllers/adminDashboard'); 
-const validateToken = require("../middleware/validateTokeHandler");
+
 const recaptcha = require("../controllers/recaptcha");
 const { postjobOpenings, getJobOpenings, deleteJobOpenings } = require("../controllers/jobOpeningsController");
 const { chatWithBot, postmessage, getHistory, initChat } = require("../controllers/chatbotController");
 const { outstandingReport } = require("../controllers/oustandingAnalysis");
+const { refrestoken } = require("../controllers/refreshController");
+const validateToken = require("../middleware/validateToken");
+
 const router=express.Router();
 
 
@@ -25,7 +28,7 @@ router.get("/getInvoice",getInvoiceData)
 router.get("/getpharmaData",getPharmaData)
 router.get("/getPharmaData2",getPharmaData2)
 router.get("/getInvoiceRD/",getInvoiceRDData)
-router.get("/getInvoiceRDforIndividual",getInvoiceRDforIndividual)
+router.get("/getInvoiceRDforIndividual",getInvoiceRDforIndividual)//--
 router.get("/getInvoiceRDforDistUpdate",getInvoiceRDDataforDistUpdate)
 router.get("/getPharamaDatainPharma/:id",getPData)
 router.post("/login",loginUser)
@@ -36,7 +39,7 @@ router.post("/sendSMS/",sendSms)
 router.get('/getdistdatabyphid/:id', getDistData);
 router.get("/checkIfLinked/:pharmaId/:distId",checkIfLinked)
 router.post("/createAdmin",adminController)
-router.get("/getInvoiceRDforDist/:distId",getInvoiceRDDataforDist)
+router.get("/getInvoiceRDforDist/:distId",getInvoiceRDDataforDist)//--
 router.get('/getDistData/:id', getDistDataController);
 router.put('/updateReportDefault',updateDefault)
 router.put('/updateNotice',updateNotice)
@@ -60,7 +63,7 @@ router.post('/uploadcentalData',uploadcentalData)
 router.post('/uploadMaharastracentalData',uploadMaharastracentalData)
 router.get('/getPharmaCentalData',getPharmaCentalData)
 router.get('/getMHCentalData',getMHCentalData)
-router.get('/getcountofAdminneedDetails',getcountofAdminneedDetails)
+router.get('/getcountofAdminneedDetails',validateToken,getcountofAdminneedDetails)
 router.get('/getDipsutedData',getDipsutedData)
 router.get('/getDistributorsData', getDistributorsData)
 router.get('/getPharmacyData',getPharmacyData)
@@ -90,7 +93,8 @@ router.get('/outstandingReport',outstandingReport)
 router.post('/message',postmessage)
 router.get('/history/:sessionId',getHistory)
 router.post('/init',initChat)
-router.get('/getOutstandingUpdateddetails',getOutstandingUpdateddetails)
+router.get('/getOutstandingUpdateddetails',validateToken,getOutstandingUpdateddetails)
 
+router.post('/refresh-token',refrestoken)
 
 module.exports=router;

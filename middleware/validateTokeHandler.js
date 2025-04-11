@@ -29,4 +29,4 @@ const validateToken = asyncHandler(async (req, res, next) => {
     return res.status(403).json({ message: "User is not authorized or token missing" });
 });
 
-module.exports = validateToken;
+module.exports = { validateToken };
