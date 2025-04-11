@@ -9,17 +9,18 @@ const refrestoken=asyncHandler(async (req, res) => {
   if (!cookies?.refreshToken) {
     return res.status(401).json({ message: "Refresh token not found" });
   }
-
+  const ACCESS_TOKEN_SECRET = 'venky123';
+  const REFRESH_TOKEN_SECRET = 'medscore24';
   const refreshToken = cookies.refreshToken;
 
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+  jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
     if (err) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
     // console.log("refreshToken",refreshToken)
     const newAccessToken = jwt.sign(
       { user: decoded.user },
-      process.env.ACCESS_TOKEN_SECRET,
+      ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" }
     );
 
