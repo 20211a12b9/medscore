@@ -4,12 +4,13 @@ const jwt = require("jsonwebtoken");
 
 const validateToken = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
-
+  const ACCESS_TOKEN_SECRET = 'venky123';
+  const REFRESH_TOKEN_SECRET = 'medscore24';
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.split(" ")[1];
 
     try {
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
       req.user = decoded.user; // or decoded, based on how you signed it
       next();
     } catch (err) {
