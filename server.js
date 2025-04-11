@@ -71,20 +71,17 @@ app.options('*', cors(corsOptions));
 // Apply general rate limiting to all routes
 // app.use(apiLimiter);
 
-express.json({
+app.use(express.json({
     limit: '50mb',
     verify: (req, res, buf) => {
-      if (req.method === 'POST' || req.method === 'PUT') {
         try {
-          JSON.parse(buf);
+            JSON.parse(buf);
         } catch (e) {
-          res.status(400).json({ error: 'Invalid JSON', details: e.message });
-          throw new Error('Invalid JSON');
+            res.status(400).json({ error: 'Invalid JSON', details: e.message });
+            throw new Error('Invalid JSON');
         }
-      }
     }
-  })
-  
+}));
 // Protect against NoSQL injection
 app.use(mongoSanitize());
 
